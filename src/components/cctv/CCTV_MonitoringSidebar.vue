@@ -85,7 +85,7 @@
         <!-- Smart Gate Alerts Tab -->
         <div v-if="activeTab === 'smartgate'">
           <div v-for="(alert, index) in displayedSmartGateAlerts" :key="'sg-' + index"
-            :class="`bg-red-900 border-t border-gray-700 p-3 cursor-pointer ${alert.active ? 'bg-opacity-80' : 'bg-opacity-50'} transform transition duration-300 hover:scale-105 hover:shadow-xl `"
+            :class="`bg-red-900 border-t border-gray-700 p-3 cursor-pointer ${alert.active ? 'bg-opacity-80' : 'bg-opacity-50'} transform transition duration-300 hover:scale-105 hover:shadow-xl hover:bg-red-700`"
             @click="viewDetails(alert)">
             <div class="font-semibold">{{ alert.title }}</div>
             <div class="text-sm flex items-center drop-shadow"> 
@@ -134,7 +134,7 @@
         <!-- Camera 360 Alarms Tab -->
         <div v-if="activeTab === 'camera360'">
           <div v-for="(alarm, index) in displayedCamera360Alarms" :key="'c360-' + index"
-            :class="`bg-red-900 border-t border-gray-700 p-3 cursor-pointer bg-opacity-80 transform transition duration-300 hover:scale-105 hover:shadow-xl `"
+            :class="`bg-red-900 border-t border-gray-700 p-3 cursor-pointer bg-opacity-80 transform transition duration-300 hover:scale-105 hover:shadow-xl hover:bg-red-700`"
             @click="viewCamera360Details(alarm)">
             <div class="font-semibold">{{ alarm.error_detail }}</div>
             
