@@ -126,7 +126,7 @@
     <div 
       v-if="hasActiveAlarms" 
       class="fixed right-4 z-50"
-      :style="{ bottom: `calc(4rem + min(80vh, ${Math.min(380 + (alarmList.length * 63), 600)}px) + 0.75rem)` }"
+      :style="{ bottom: `calc(3rem + min(60vh, ${Math.min(360 + (alarmList.length * 63), 600)}px) + 0.9rem)` }"
     >
       <button
         @click="toggleAlarmPopup"
