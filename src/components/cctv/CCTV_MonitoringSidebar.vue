@@ -289,56 +289,54 @@
       <div v-if="selectedCamera360Alarm"
         class="fixed inset-0 bg-opacity-50 flex items-center justify-center p-4 z-50 bg-black/50 backdrop-blur-sm">
         <div class="bg-gray-800 rounded-lg p-6 max-w-2xl w-full" @click.stop>
-          <h3 class="text-xl font-bold mb-4 text-white">Camera 360 Alarm Details</h3>
-          <div class="grid grid-cols-2 gap-4 text-white">
-            <div><strong>ID:</strong> {{ selectedCamera360Alarm.id }}</div>
-            <div><strong>UUID:</strong> {{ selectedCamera360Alarm.alarm_uuid }}</div>
-            <div><strong>Camera:</strong> {{ selectedCamera360Alarm.camera_name || 'Unknown' }}</div>
-            <div><strong>Location:</strong> {{ selectedCamera360Alarm.location }}</div>
-            <div><strong>Date Time:</strong> {{ selectedCamera360Alarm.timestamp }}</div>
-            <div><strong>Status: </strong> 
-              <span :class="getStatusColor(selectedCamera360Alarm.status)">
-                {{ getStatusText(selectedCamera360Alarm.status) }}
-              </span>
-            </div>
-            <div v-if="selectedCamera360Alarm.error_detail" class="col-span-2">
-              <strong>Error Code:</strong> {{ selectedCamera360Alarm.error_detail }}
-            </div>
-            
-            <!-- Display Image if available -->
-             <!-- <div v-if="selectedCamera360Alarm.img_error" class="col-span-2">
-              <strong>Error Image:</strong>
-              <img :src="camera360ErrorImageUrl"
-                  alt="Error image" class="mt-2 max-w-full h-auto rounded-lg" />
-            </div> -->
+  <h3 class="text-xl font-bold mb-4 text-white">Camera 360 Alarm Details</h3>
+  <div class="grid grid-cols-2 gap-4 text-white">
+    <!-- Cột trái -->
+    <div><strong>ID:</strong> {{ selectedCamera360Alarm.id }}</div>
+    <div><strong>Location:</strong> {{ selectedCamera360Alarm.location }}</div>
+    
+    <!-- Cột phải -->
+    <div><strong>Camera:</strong> {{ selectedCamera360Alarm.camera_name || 'Unknown' }}</div>
+    <div><strong>Date Time:</strong> {{ selectedCamera360Alarm.timestamp }}</div>
+    
+    <!-- Hàng thứ 3 -->
+    <div><strong>Status: </strong> 
+      <span :class="getStatusColor(selectedCamera360Alarm.status)">
+        {{ getStatusText(selectedCamera360Alarm.status) }}
+      </span>
+    </div>
+    <div v-if="selectedCamera360Alarm.error_detail">
+      <strong>Error Code:</strong> {{ selectedCamera360Alarm.error_detail }}
+    </div>
+    
+    <!-- Video full width -->
+    <div v-if="selectedCamera360Alarm.video_error" class="col-span-2">
+      <strong>Video:</strong>
+      <video controls class="mt-2 max-w-full h-auto rounded-lg">
+        <source :src="camera360ErrorVideoUrl" type="video/mp4" />
+      </video>
+    </div>
+  </div>
 
-            <div v-if="selectedCamera360Alarm.video_error" class="col-span-2">
-              <strong>Video:</strong>
-              <video controls class="mt-2 max-w-full h-auto rounded-lg">
-                <source :src="camera360ErrorVideoUrl" type="video/mp4" />
-              </video>
-            </div>
-          </div>
-
-          <div class="mt-4 flex items-center justify-between">
-            <div v-if="selectedCamera360Alarm.status === 0" class="space-x-2">
-              <Button label="Accept" severity="success" size="small" @click="acceptCamera360WorkerEvent(selectedCamera360Alarm)" />
-              <Button label="Decline" severity="danger" size="small" @click="declineCamera360WorkerEvent(selectedCamera360Alarm)" />
-            </div>
-            <div v-else-if="selectedCamera360Alarm.status === 1">
-              <Button label="Accepted" severity="success" size="small" disabled />
-            </div>
-            <div v-else-if="selectedCamera360Alarm.status === 2">
-              <Button label="Declined" severity="danger" size="small" disabled />
-            </div>
-            <div v-else>
-              <Button label="Confirmed" severity="success" size="small" disabled />
-            </div>
-            <button class="px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-700" @click="selectedCamera360Alarm = null">
-              Close
-            </button>
-          </div>
-        </div>
+  <div class="mt-4 flex items-center justify-between">
+    <div v-if="selectedCamera360Alarm.status === 0" class="space-x-2">
+      <Button label="Accept" severity="success" size="small" @click="acceptCamera360WorkerEvent(selectedCamera360Alarm)" />
+      <Button label="Decline" severity="danger" size="small" @click="declineCamera360WorkerEvent(selectedCamera360Alarm)" />
+    </div>
+    <div v-else-if="selectedCamera360Alarm.status === 1">
+      <Button label="Accepted" severity="success" size="small" disabled />
+    </div>
+    <div v-else-if="selectedCamera360Alarm.status === 2">
+      <Button label="Declined" severity="danger" size="small" disabled />
+    </div>
+    <div v-else>
+      <Button label="Confirmed" severity="success" size="small" disabled />
+    </div>
+    <button class="px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-700" @click="selectedCamera360Alarm = null">
+      Close
+    </button>
+  </div>
+</div>
       </div>
     </teleport>
 

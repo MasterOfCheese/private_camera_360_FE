@@ -188,95 +188,113 @@
       :draggable="false"
       :resizable="false"
       :style="{ backgroundColor: 'rgba(31,41,55,0.6)' }"
-      class="fixed bottom-4 right-4 w-[17.5vw] max-h-[80vh]
+      class="fixed bottom-2 right-2 
+            w-[90vw] sm:w-[22rem] md:w-[24rem] lg:w-[26rem] xl:w-[20rem]
+            max-w-[95vw] max-h-[85vh] sm:max-h-[80vh]
             backdrop-blur-xl rounded-xl shadow-2xl 
             border border-white/20 text-white
-            overflow-y-auto transition-transform duration-300 ease-out
+            overflow-hidden transition-all duration-300 ease-out
             scale-100 opacity-100"
     >
-      <div class="flex flex-col max-h-96">
+      <div class="flex flex-col h-full max-h-[75vh] sm:max-h-96">
         <!-- Header with Select All -->
-        <div class="flex justify-between mb-2 pb-2 border-gray-600">
+        <div class="flex flex-col sm:flex-row sm:justify-between gap-2 mb-3 pb-2 border-b border-gray-600">
           <!-- Left -->
-          <span class="text-md font-medium text-blue-300 whitespace-nowrap">
+          <span class="text-sm sm:text-md font-medium text-blue-300 whitespace-nowrap">
             {{ alarmList.length }} NG Error(s) Found
           </span>
 
           <!-- Right (button + warning) -->
-          <div class="flex flex-col items-end space-y-1">
+          <div class="flex flex-col items-start sm:items-end">
             <Button 
               @click="selectAllAlarms" 
               :label="selectedAlarms.size === alarmList.length ? 'Deselect All' : 'Select All'"
-              class="p-button-sm"
+              class="p-button-sm text-xs sm:text-sm"
               size="small"
             />
           </div>
         </div>
 
         <!-- Scrollable Alarm List -->
-        <div class="overflow-y-auto flex-1 space-y-3 scrollbar-thin scrollbar-thumb-blue-700/50 scrollbar-track-transparent pr-[0.4rem]">
+        <div class="overflow-y-auto flex-1 space-y-2 sm:space-y-3 scrollbar-thin scrollbar-thumb-blue-700/50 scrollbar-track-transparent pr-1 sm:pr-2">
           <div 
             v-for="alarm in alarmList" 
             :key="alarm.id"
-            class="flex items-start p-3 border border-gray-600 rounded-lg bg-gray-800/40 space-x-3"
+            class="flex flex-col sm:flex-row items-start p-2 sm:p-3 border border-gray-600 rounded-lg bg-gray-800/40 gap-2 sm:gap-3"
             :class="{ 'bg-blue-700/20 border-blue-500': selectedAlarms.has(alarm.id) }"
           >
-            <!-- Checkbox -->
-            <div class="pt-1">
-              <input
-                type="checkbox"
-                :checked="selectedAlarms.has(alarm.id)"
-                @change="toggleAlarmSelection(alarm.id)"
-                class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 bg-white/20 cursor-pointer flex-shrink-0"
+            <!-- Mobile: Checkbox and Image row -->
+            <div class="flex items-center gap-3 w-full sm:w-auto">
+              <!-- Checkbox -->
+              <div class="flex-shrink-0">
+                <input
+                  type="checkbox"
+                  :checked="selectedAlarms.has(alarm.id)"
+                  @change="toggleAlarmSelection(alarm.id)"
+                  class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 bg-white/20 cursor-pointer"
+                />
+              </div>
+
+              <!-- Alarm Image -->
+              <img 
+                :src="alarm.img_error" 
+                alt="NG Error Image" 
+                class="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded border border-gray-500 flex-shrink-0"
               />
+
+              <!-- Mobile: Camera ID inline with image -->
+              <div class="block sm:hidden flex-1 min-w-0">
+                <div class="text-xs">
+                  <span class="text-gray-400">Camera:</span>
+                  <span class="ml-1 text-white font-medium break-all">{{ alarm.camera_id }}</span>
+                </div>
+              </div>
             </div>
 
-            <!-- Alarm Image -->
-            <img 
-              :src="alarm.img_error" 
-              alt="NG Error Image" 
-              class="w-20 h-20 object-cover rounded border border-gray-500 flex-shrink-0"
-            />
-
             <!-- Alarm Information -->
-            <div class="flex-1 min-w-0 text-sm space-y-1">
-              <div>
+            <div class="flex-1 min-w-0 text-xs sm:text-sm space-y-1 w-full">
+              <!-- Desktop: Camera ID -->
+              <div class="hidden sm:block">
                 <span class="text-gray-400">Camera:</span>
-                <span class="ml-2 text-white font-medium">{{ alarm.camera_id }}</span>
+                <span class="ml-2 text-white font-medium break-all">{{ alarm.camera_id }}</span>
               </div>
+              
               <div>
                 <span class="text-gray-400">Error:</span>
-                <span class="ml-2 text-blue-300 font-medium">{{ alarm.error_detail }}</span>
+                <span class="ml-1 sm:ml-2 text-blue-300 font-medium break-words">{{ alarm.error_detail }}</span>
               </div>
+              
               <div>
                 <span class="text-gray-400">Location:</span>
-                <span class="ml-2 text-white">{{ alarm.location }}</span>
+                <span class="ml-1 sm:ml-2 text-white break-words">{{ alarm.location }}</span>
               </div>
+              
               <div>
                 <span class="text-gray-400">Time:</span>
-                <span class="ml-2 text-white">{{ new Date(alarm.timestamp || alarm.created_at).toLocaleString() }}</span>
+                <span class="ml-1 sm:ml-2 text-white text-xs sm:text-sm">
+                  {{ new Date(alarm.timestamp || alarm.created_at).toLocaleString() }}
+                </span>
               </div>
             </div>
           </div>
         </div>
 
         <!-- Employee ID Input -->
-        <div class="mt-4 pt-4 border-t border-gray-600">
-          <!-- <label class="block text-sm text-gray-300 mb-2">Employee ID (Required for confirmation)</label> -->
+        <div class="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-600 flex-shrink-0">
           <input
             v-model="confirmCode"
             placeholder="Enter your employee ID (e.g., V1234567)"
-            class="p-3 w-full border border-gray-600 rounded-lg text-white text-xs uppercase placeholder-grey placeholder:text-xs"
+            class="p-2 sm:p-3 w-full border border-gray-600 rounded-lg text-white text-xs sm:text-sm uppercase placeholder-gray-400 placeholder:text-xs sm:placeholder:text-sm bg-gray-800/50"
           />
-          <div v-if="confirmCode && !isConfirmCodeValid" class="text-sm text-red-400 mt-1">
+          <div v-if="confirmCode && !isConfirmCodeValid" class="text-xs sm:text-sm text-red-400 mt-1">
             Invalid employee ID format! (Expected format: V1234567)
           </div>
         </div>
       </div>
 
       <template #footer>
-        <div class="flex justify-between items-center w-full">
-          <span class="text-sm text-gray-400">
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 w-full">
+          <span class="text-xs sm:text-sm text-gray-400 order-2 sm:order-1">
             <!-- Selected: {{ selectedAlarms.size }} / {{ alarmList.length }} -->
           </span>
           <Button 
@@ -285,7 +303,7 @@
             :label="`Confirm Errors!`"
             :unstyled="true"
             :class="[ 
-              'text-white font-medium px-4 py-2 rounded-lg transition-colors duration-400 border-none cursor-pointer',
+              'text-white font-medium px-3 py-2 sm:px-4 sm:py-2 rounded-lg transition-colors duration-400 border-none cursor-pointer text-sm sm:text-base order-1 sm:order-2 w-full sm:w-auto',
               isFormIncomplete 
                 ? 'bg-gray-400 cursor-not-allowed' 
                 : 'bg-blue-600 hover:bg-blue-400 hover:brightness-110'
@@ -335,6 +353,8 @@ function playSound(audioUrl) {
     console.warn('Error playing sound:' , err);
   });
 }
+
+const isConfirming = ref(false);
 
 async function checkTotalAlarmsAndPlay(apiUrls, audioUrl) {
   try {
@@ -480,7 +500,8 @@ const isFormIncomplete = computed(() => {
 
 // Cập nhật hàm fetchAlarms() - thay thế hàm hiện tại
 async function fetchAlarms() {
-  if (!enableAlarms.value) return;
+  // Thêm isConfirming.value vào điều kiện có sẵn
+  if (!enableAlarms.value || isConfirming.value) return;
   
   try {
     const response = await fetchWrapper.get(
@@ -488,45 +509,33 @@ async function fetchAlarms() {
     );
     
     if (response && Array.isArray(response) && response.length > 0) {
-      // Xử lý ảnh
       const processedAlarms = response.map(alarm => {
         if (alarm.img_error && alarm.img_error !== 'null' && alarm.img_error !== null) {
           alarm.img_error = window.appConfig.apiUrl + '/' + alarm.img_error;
-        } else {
-          // alarm.img_error = '/images/no-image-placeholder.png';
         }
         return alarm;
       });
       
-      // Tìm alarms mới (so với list hiện tại)
-      const existingAlarmIds = new Set(alarmList.value.map(alarm => alarm.id));
-      const newAlarms = processedAlarms.filter(alarm => !existingAlarmIds.has(alarm.id));
+      // Sửa logic so sánh - dùng ID thay vì length
+      const currentIds = new Set(alarmList.value.map(a => a.id));
+      const hasNewAlarms = processedAlarms.some(alarm => !currentIds.has(alarm.id));
       
-      // Chỉ phát âm thanh nếu có alarms mới
-      if (newAlarms.length > 0) {
-        playSound(alarmSound);
-        
-        // ✅ CHỈ tự động hiện popup khi có alarms MỚI và user chưa tự ẩn
-        if (newAlarms.length > 0 && !userHasHiddenPopup.value) {
-          alarmPopupVisible.value = true;
-        }
-      }
-      
-      // Cập nhật list
       alarmList.value = processedAlarms;
       
-      // Bắt đầu phát âm thanh khi có alarms (không phụ thuộc popup visible)
-      if (hasActiveAlarms.value) {
+      if (hasNewAlarms) {
+        playSound(alarmSound);
+        if (!userHasHiddenPopup.value) {
+          alarmPopupVisible.value = true;
+        }
         startAlarmAudio();
       }
       
     } else {
-      // Không có alarms - clear everything
       alarmList.value = [];
       selectedAlarms.value.clear();
       stopAlarmAudio();
       alarmPopupVisible.value = false;
-      userHasHiddenPopup.value = false; // Reset flag khi hết alarms
+      userHasHiddenPopup.value = false;
     }
     
   } catch (err) {
@@ -537,17 +546,54 @@ async function fetchAlarms() {
 // Cập nhật hàm toggleAlarmPopup
 const toggleAlarmPopup = () => {
   alarmPopupVisible.value = !alarmPopupVisible.value;
+  userHasHiddenPopup.value = !alarmPopupVisible.value;
+};
+
+// ✅ 7. HOẶC nếu vẫn có vấn đề, dùng cách này (aggressive):
+const confirmAlarmAggressive = async () => {
+  if (isFormIncomplete.value) return;
   
-  // Đánh dấu user đã tương tác với popup
-  if (!alarmPopupVisible.value) {
-    userHasHiddenPopup.value = true; // User đã tự ẩn popup
-    // KHÔNG dừng âm thanh khi chỉ ẩn popup - âm thanh vẫn chạy để nhắc nhở
-  } else {
-    userHasHiddenPopup.value = false; // User đã mở lại popup
-    // Khi mở popup, đảm bảo âm thanh đang chạy nếu có alarms
-    if (hasActiveAlarms.value) {
-      startAlarmAudio();
+  try {
+    const selectedAlarmIds = Array.from(selectedAlarms.value);
+    const employeeId = confirmCode.value;
+    
+    // 1. Tắt interval tạm thời
+    if (alarmInterval) {
+      clearInterval(alarmInterval);
+      alarmInterval = null;
     }
+    
+    // 2. Clear UI ngay
+    alarmList.value = [];
+    selectedAlarms.value.clear();
+    confirmCode.value = '';
+    stopAlarmAudio();
+    alarmPopupVisible.value = false;
+    userHasHiddenPopup.value = false;
+    
+    // 3. Gọi API
+    const confirmPromises = selectedAlarmIds.map(alarmId => {
+      return fetchWrapper.patch(
+        `${window.appConfig.apiUrl}/v1/cameras/alarms/${alarmId}/confirm`, 
+        {
+          employee_confirm_id: employeeId,
+          client_ip: 'Browser-Client'
+        }
+      );
+    });
+    
+    await Promise.all(confirmPromises);
+    console.log(`Confirmed ${selectedAlarmIds.length} alarms`);
+    
+    // 4. Delay trước khi restart interval
+    setTimeout(() => {
+      startAlarmSimulation();
+    }, 2000); // Wait 2s cho server kip process
+    
+  } catch (err) {
+    console.error('Error confirming alarms:', err);
+    // Restart interval ngay kể cả khi lỗi
+    startAlarmSimulation();
   }
 };
 
@@ -587,16 +633,20 @@ const simulateAlarms = () => {
 }
 
 const startAlarmSimulation = () => {
-  if (!alarmInterval) {
-    alarmInterval = setInterval(fetchAlarms, 3000) // Simulate alarm every 5 seconds
-  }
+  if (alarmInterval) return; // Tránh double interval
+  
+  // Gọi ngay lần đầu
+  fetchAlarms();
+  
+  // Interval đơn giản
+  alarmInterval = setInterval(fetchAlarms, 5000);
 }
 
 // Cập nhật hàm stopAlarmSimulation
 const stopAlarmSimulation = () => {
   if (alarmInterval) {
-    clearInterval(alarmInterval)
-    alarmInterval = null
+    clearInterval(alarmInterval);
+    alarmInterval = null;
   }
   stopAlarmAudio();
   alarmPopupVisible.value = false;
@@ -627,82 +677,165 @@ const selectAllAlarms = () => {
 // Thêm hàm này để lấy IP công khai, đáng tin cậy hơn WebRTC
 const getPublicIp = async () => {
   try {
-    const response = await fetch('https://api.ipify.org?format=json');
+    // Tạo AbortController để control timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2000); // Chỉ 2 giây thôi
+    
+    const response = await fetch('https://api.ipify.org?format=json', {
+      signal: controller.signal,
+      timeout: 2000 // Backup timeout
+    });
+    
+    clearTimeout(timeoutId);
+    
     if (!response.ok) {
       throw new Error('Failed to fetch public IP');
     }
     const data = await response.json();
-    return data.ip;
+    return data.ip || 'Unknown';
   } catch (err) {
-    console.error('Error fetching public IP:', err);
+    if (err.name === 'AbortError') {
+      console.warn('IP fetch timeout after 2s');
+    } else {
+      console.error('Error fetching public IP:', err);
+    }
     return 'Unknown';
+  }
+}
+
+const confirmAlarm = async () => {
+  if (isFormIncomplete.value || isConfirming.value) return;
+  
+  isConfirming.value = true;
+  
+  try {
+    const selectedAlarmIds = Array.from(selectedAlarms.value);
+    const employeeId = confirmCode.value;
+    
+    // Gọi API confirm
+    const confirmPromises = selectedAlarmIds.map(alarmId => {
+      return fetchWrapper.patch(
+        `${window.appConfig.apiUrl}/v1/cameras/alarms/${alarmId}/confirm`, 
+        {
+          employee_confirm_id: employeeId,
+          client_ip: 'Browser-Client'
+        }
+      );
+    });
+    
+    await Promise.all(confirmPromises);
+    console.log(`Confirmed ${selectedAlarmIds.length} alarms`);
+    
+    // Clear form
+    selectedAlarms.value.clear();
+    confirmCode.value = '';
+    
+    // Fetch lại để cập nhật từ server
+    await fetchAlarms();
+    
+  } catch (err) {
+    console.error('Error confirming alarms:', err);
+    alert('Không thể xác nhận cảnh báo. Vui lòng thử lại.');
+  } finally {
+    isConfirming.value = false;
   }
 };
 
-const confirmAlarm = async () => {
+const getLocalIP = () => {
+  return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      reject(new Error('Local IP timeout'));
+    }, 1000); // Chỉ 1 giây
+
+    try {
+      const RTCPeerConnection = window.RTCPeerConnection || 
+                               window.mozRTCPeerConnection || 
+                               window.webkitRTCPeerConnection;
+                               
+      if (!RTCPeerConnection) {
+        clearTimeout(timeout);
+        reject(new Error('WebRTC not supported'));
+        return;
+      }
+
+      const pc = new RTCPeerConnection({ iceServers: [] });
+      pc.createDataChannel('');
+      pc.createOffer().then(offer => pc.setLocalDescription(offer));
+
+      pc.onicecandidate = (event) => {
+        if (event.candidate) {
+          const candidate = event.candidate.candidate;
+          const ipMatch = candidate.match(/(\d+\.\d+\.\d+\.\d+)/);
+          if (ipMatch) {
+            const ip = ipMatch[1];
+            clearTimeout(timeout);
+            pc.close();
+            resolve(ip);
+          }
+        }
+      };
+    } catch (err) {
+      clearTimeout(timeout);
+      reject(err);
+    }
+  });
+}
+
+// ✅ 6. HOẶC đơn giản nhất: Không cần IP thực, dùng browser info
+const confirmAlarmSimple = async () => {
   if (isFormIncomplete.value) {
     console.error('Form is incomplete or no alarms selected.');
     return;
   }
   
   try {
-    let publicIp = 'Unknown';
-    try {
-      publicIp = await getPublicIp();
-      if (!publicIp || publicIp === 'Unknown') {
-        publicIp = 'Unknown';
-      }
-    } catch (err) {
-      console.warn('Could not get public IP, using Unknown:', err);
-      publicIp = 'Unknown';
-    }
-    
     const selectedAlarmIds = Array.from(selectedAlarms.value);
+    if (selectedAlarmIds.length === 0) return;
     
-    if (selectedAlarmIds.length === 0) {
-      return;
+    // ✅ Cập nhật UI ngay lập tức
+    const confirmedIds = new Set(selectedAlarmIds);
+    alarmList.value = alarmList.value.filter(alarm => !confirmedIds.has(alarm.id));
+    
+    const employeeId = confirmCode.value;
+    selectedAlarms.value.clear();
+    confirmCode.value = '';
+    
+    if (alarmList.value.length === 0) {
+      stopAlarmAudio();
+      alarmPopupVisible.value = false;
+      userHasHiddenPopup.value = false;
     }
     
+    // ✅ Dùng thông tin có sẵn thay vì fetch IP
+    const browserInfo = `${navigator.userAgent.slice(0, 50)}...`;
+    const timestamp = new Date().toISOString();
+    const clientId = `Browser-${timestamp.slice(-8)}`; // Unique ID từ timestamp
+    
+    // API call background
     const confirmPromises = selectedAlarmIds.map(alarmId => {
-      const requestBody = {
-        employee_confirm_id: confirmCode.value,
-        client_ip: publicIp,
-      };
-      
       return fetchWrapper.patch(
         `${window.appConfig.apiUrl}/v1/cameras/alarms/${alarmId}/confirm`, 
-        requestBody
-      );
+        {
+          employee_confirm_id: employeeId,
+          client_ip: clientId, // Dùng clientId thay vì IP thực
+        }
+      ).catch(err => {
+        console.error(`Failed to confirm alarm ${alarmId}:`, err);
+        return null;
+      });
     });
     
-    const responses = await Promise.all(confirmPromises);
-    const allSuccessful = responses.every(response => response && response.alarm);
-    
-    if (allSuccessful) {
-      console.log(`Successfully confirmed ${selectedAlarmIds.length} alarms`);
-      
-      // Clear form
-      selectedAlarms.value.clear();
-      confirmCode.value = '';
-      
-      // ✅ Refresh danh sách từ server
-      await fetchAlarms();
-      
-      // ✅ CHỈ dừng âm thanh khi không còn alarms nào
-      if (!hasActiveAlarms.value) {
-        stopAlarmAudio();
-        userHasHiddenPopup.value = false; // Reset flag khi hết alarms
-      }
-      
-    } else {
-      throw new Error('Some confirmations failed');
-    }
+    Promise.all(confirmPromises).then(responses => {
+      const successCount = responses.filter(r => r && r.alarm).length;
+      console.log(`Successfully confirmed ${successCount}/${selectedAlarmIds.length} alarms`);
+      setTimeout(fetchAlarms, 1000);
+    });
     
   } catch (err) {
     console.error('Error confirming alarms:', err);
-    alert(`Không thể xác nhận cảnh báo: ${err.message || err}. Vui lòng thử lại.`);
+    alert(`Không thể xác nhận cảnh báo. Vui lòng thử lại.`);
   }
-};
+}
 
 
 // --- Computed Properties ---
@@ -994,6 +1127,7 @@ watch(hasActiveAlarms, (newValue) => {
     stopAlarmAudio();
   }
 });
+
 
 // Thêm watcher này vào script setup
 watch(enableAlarms, (newValue) => {
