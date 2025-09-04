@@ -1,346 +1,308 @@
 <template>
   <aside
-    class="w-56 bg-gray-800/40 backdrop-blur-xl border-r border-white/10 flex flex-col text-gray-300 flex-shrink-0 shadow-lg z-10">
-    <div class="p-4 border-b border-white/10 bg-white/5">
-      <h3 class="text-xs font-semibold uppercase text-blue-300 mb-3 tracking-wider">{{ $t('Status') }}</h3>
-      <div class="space-y-2 text-sm">
-        <div class="flex justify-between items-center">
-          <span>{{ $t('Visitors') }}</span>
-          <span class="font-semibold px-2 py-0.5 bg-blue-600/30 rounded text-sm text-white">{{ visitors
-          }}</span>
-        </div>
-        <div class="flex justify-between items-center">
-          <span>{{ $t('Alarms') }}</span>
-          <span class="font-semibold px-2 py-0.5 bg-red-600/30 rounded text-sm text-white">{{ alarms
-          }}</span>
-        </div>
-        <div class="flex justify-between items-center">
-          <span>{{ $t('Violations') }}</span>
-          <span class="font-semibold px-2 py-0.5 bg-yellow-600/30 rounded text-sm text-white">{{ violations
-          }} %</span>
-        </div>
+  class="w-56 bg-gray-800/40 backdrop-blur-xl border-r border-white/10 flex flex-col text-gray-300 flex-shrink-0 shadow-lg z-10">
+  <div class="p-4 border-b border-white/10 bg-white/5">
+    <h3 class="text-xs font-semibold uppercase text-blue-300 mb-3 tracking-wider">{{ $t('Status') }}</h3>
+    <div class="space-y-2 text-sm">
+      <div class="flex justify-between items-center">
+        <span>{{ $t('Visitors') }}</span>
+        <span class="font-semibold px-2 py-0.5 bg-blue-600/30 rounded text-sm text-white">{{ visitors
+        }}</span>
+      </div>
+      <div class="flex justify-between items-center">
+        <span>{{ $t('Alarms') }}</span>
+        <span class="font-semibold px-2 py-0.5 bg-red-600/30 rounded text-sm text-white">{{ alarms
+        }}</span>
+      </div>
+      <div class="flex justify-between items-center">
+        <span>{{ $t('Violations') }}</span>
+        <span class="font-semibold px-2 py-0.5 bg-yellow-600/30 rounded text-sm text-white">{{ violations
+        }} %</span>
       </div>
     </div>
+  </div>
 
-    <SystemResource />
-    
-    <nav
-      class="flex-grow overflow-y-auto py-3 space-y-1 scrollbar-thin scrollbar-thumb-blue-800/40 scrollbar-track-transparent">
-      <RouterLink to="/" :class="[
-          'flex items-center px-4 py-2 text-sm transition-all delay-150 duration-300',
-          route.path === '/'
-            ? 'font-medium bg-gradient-to-r from-blue-700/50 to-transparent text-white border-l-4 border-blue-400'
-            : 'text-gray-300 rounded-md hover:bg-white/10 hover:text-white group transition-colors duration-150',
-        ]">
-        <i class="pi pi-video mr-3" :class="route.path === '/'
-          ? 'text-base'
-          : 'text-gray-400 group-hover:text-blue-300 transition-colors duration-150 text-base'
-          "></i>
-        <span>{{ $t("LIVE_View") }}</span>
-      </RouterLink>
+  <SystemResource />
+  
+  <nav
+    class="py-3 space-y-1">
+    <RouterLink to="/" :class="[
+      'flex items-center px-4 py-2 text-sm transition-all delay-150 duration-300',
+      route.path === '/'
+        ? 'font-medium bg-gradient-to-r from-blue-700/50 to-transparent text-white border-l-4 border-blue-400'
+        : 'text-gray-300 rounded-md hover:bg-white/10 hover:text-white group transition-colors duration-150',
+    ]">
+      <i class="pi pi-video mr-3" :class="route.path === '/'
+        ? 'text-base'
+        : 'text-gray-400 group-hover:text-blue-300 transition-colors duration-150 text-base'
+        "></i>
+      <span>{{ $t("LIVE_View") }}</span>
+    </RouterLink>
 
-      <RouterLink to="/notifications" :class="[
-        'transition-all duration-300 flex items-center px-4 py-2 text-sm',
-        route.path === '/notifications'
-          ? 'font-medium bg-gradient-to-r from-blue-700/50 to-transparent text-white border-l-4 border-blue-400'
-          : 'text-gray-300 rounded-md hover:bg-white/10 hover:text-white group transition-colors duration-150',
-      ]">
-        <i class="pi pi-bell mr-3" :class="route.path === '/notifications'
-          ? 'text-base'
-          : 'text-gray-400 group-hover:text-blue-300 transition-colors duration-150 text-base'
-          "></i>
-        <span>{{ $t("Notifications") }}</span>
-        <span class="ml-auto text-xs font-medium bg-red-600 text-red-100 px-1.5 py-0.5 rounded-full">{{ totalAlertsCount }}</span>
-      </RouterLink>
+    <RouterLink to="/notifications" :class="[
+      'transition-all duration-300 flex items-center px-4 py-2 text-sm',
+      route.path === '/notifications'
+        ? 'font-medium bg-gradient-to-r from-blue-700/50 to-transparent text-white border-l-4 border-blue-400'
+        : 'text-gray-300 rounded-md hover:bg-white/10 hover:text-white group transition-colors duration-150',
+    ]">
+      <i class="pi pi-bell mr-3" :class="route.path === '/notifications'
+        ? 'text-base'
+        : 'text-gray-400 group-hover:text-blue-300 transition-colors duration-150 text-base'
+        "></i>
+      <span>{{ $t("Notifications") }}</span>
+      <span class="ml-auto text-xs font-medium bg-red-600 text-red-100 px-1.5 py-0.5 rounded-full">{{ totalAlertsCount }}</span>
+    </RouterLink>
 
-      <!-- Tab Switch Buttons -->
-      <div class="px-4 py-2 border-t border-white/10 mt-2">
-        <div class="flex bg-gray-700/50 rounded-lg p-1">
-          <button
-            @click="activeTab = 'smartgate'"
-            :class="[
-              'flex-1 text-xs px-2 py-1.5 rounded-md transition-all duration-200 cursor-pointer',
-              activeTab === 'smartgate'
-                ? 'bg-blue-600 text-white font-medium'
-                : 'text-gray-400 hover:text-gray-200'
-            ]">
-            Smart Gate
-          </button>
-          <button
-            @click="activeTab = 'camera360'"
-            :class="[
-              'flex-1 text-xs px-2 py-1.5 rounded-md transition-all duration-200 cursor-pointer',
-              activeTab === 'camera360'
-                ? 'bg-blue-600 text-white font-medium'
-                : 'text-gray-400 hover:text-gray-200'
-            ]">
-            Camera 360
-          </button>
-        </div>
-      </div>
-
-      <!-- Alert Zone - Fixed height -->
-      <div
-        class="flex-1 flex flex-col overflow-y-auto overflow-x-hidden max-h-85 scrollbar-thin scrollbar-thumb-blue-800/40 scrollbar-track-transparent">
-        <!-- Smart Gate Alerts Tab -->
-        <div v-if="activeTab === 'smartgate'">
-          <div v-for="(alert, index) in displayedSmartGateAlerts" :key="'sg-' + index"
-            :class="`bg-red-900 border-t border-gray-700 p-3 cursor-pointer ${alert.active ? 'bg-opacity-80' : 'bg-opacity-50'} transform transition duration-300 hover:scale-105 hover:shadow-xl hover:bg-red-700`"
-            @click="viewDetails(alert)">
-            <div class="font-semibold">{{ alert.title }}</div>
-            <div class="text-sm flex items-center drop-shadow"> 
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-gray-300" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
-                <path d="M14 6a2 2 0 012-2h2a2 2 0 012 2v8a2 2 0 01-2 2h-2a2 2 0 01-2-2V6z" />
-              </svg>
-              {{ alert.name_camera }}
-            </div>
-
-            <div class="flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-gray-300" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
-              </svg>
-              <span class="text-sm drop-shadow">{{ alert.name_user ? alert.name_user : 'Test' }}</span>
-            </div>
-
-            <div class="flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-gray-300" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd"
-                  d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
-                  clip-rule="evenodd" />
-              </svg>
-              <span class="text-sm drop-shadow">{{ alert.location }}</span>
-            </div>
-            <div class="flex items-center mt-1">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-gray-300" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
-                  clip-rule="evenodd" />
-              </svg>
-              <span class="text-sm drop-shadow">{{ alert.time }}</span>
-            </div>
-          </div>
-
-          <div v-if="displayedSmartGateAlerts.length === 0" class="p-6 text-center text-gray-400">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-3 text-gray-500" fill="none"
-              viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-            <p>No Smart Gate alerts to display</p>
-          </div>
-        </div>
-
-        <!-- Camera 360 Alarms Tab -->
-        <div v-if="activeTab === 'camera360'">
-          <div v-for="(alarm, index) in displayedCamera360Alarms" :key="'c360-' + index"
-            :class="`bg-red-900 border-t border-gray-700 p-3 cursor-pointer bg-opacity-80 transform transition duration-300 hover:scale-105 hover:shadow-xl hover:bg-red-700`"
-            @click="viewCamera360Details(alarm)">
-            <div class="font-semibold">{{ alarm.error_detail }}</div>
-            
-            <div class="text-sm flex items-center drop-shadow"> 
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-gray-300" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
-                <path d="M14 6a2 2 0 012-2h2a2 2 0 012 2v8a2 2 0 01-2 2h-2a2 2 0 01-2-2V6z" />
-              </svg>
-              {{ alarm.camera_name || 'Unknown' }}
-            </div>
-
-            <div class="flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-gray-300" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd"
-                  d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
-                  clip-rule="evenodd" />
-              </svg>
-              <span class="text-sm drop-shadow">{{ alarm.location }}</span>
-            </div>
-
-            <div class="flex items-center mt-1">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-gray-300" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
-                  clip-rule="evenodd" />
-              </svg>
-              <span class="text-sm drop-shadow">{{ alarm.timestamp }}</span>
-            </div>
-          </div>
-
-          <div v-if="displayedCamera360Alarms.length === 0" class="p-6 text-center text-gray-400">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-3 text-gray-500" fill="none"
-              viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-            <p>No Camera 360 alarms to display</p>
-          </div>
-
-          <!-- <div class="flex justify-center mt-2 space-x-2">
-            <button 
-              v-for="page in displayedCamera360Pages" 
-              :key="page" 
-              :disabled="page === '...'"
-              @click="typeof page === 'number' && goToCamera360Page(page)"
-              class="px-3 py-1 rounded-md text-xs"
-              :class="page === currentCamera360Page ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed'"
-            >
-              {{ page }}
-            </button>
-          </div> -->
-
-          <!-- Also add pagination info above the pagination buttons -->
-          <!-- <div class="text-xs text-center text-gray-400 mt-2 mb-1">
-            Page {{ currentCamera360Page }} of {{ totalCamera360Pages }} ({{ totalCamera360Items }} total items)
-          </div> -->
-
-        </div>
-
-      </div>
-    </nav>
-
-    <div class="flex flex-col">
-      <!-- Settings + Logout + Powered by -->
-      <div class="mt-auto">
-        <!-- Settings + Logout -->
-        <div class="px-4 pt-1 pb-2 border-t border-white/10">
-          <RouterLink to="/settings" :class="[
-            'flex items-center px-4 py-2 text-sm transition-all duration-300',
-            route.path === '/settings'
-              ? 'font-medium bg-gradient-to-r from-blue-700/50 to-transparent text-white border-l-4 border-blue-400'
-              : 'text-gray-300 rounded-md hover:bg-white/10 hover:text-white group transition-colors duration-150',
+    <div class="px-4 py-2 border-t border-white/10 mt-2">
+      <div class="flex bg-gray-700/50 rounded-lg p-1">
+        <button
+          @click="activeTab = 'smartgate'"
+          :class="[
+            'flex-1 text-xs px-2 py-1.5 rounded-md transition-all duration-200 cursor-pointer',
+            activeTab === 'smartgate'
+              ? 'bg-blue-600 text-white font-medium'
+              : 'text-gray-400 hover:text-gray-200'
           ]">
-            <i class="pi pi-cog mr-3" :class="route.path === '/settings'
-              ? 'text-base'
-              : 'text-gray-400 group-hover:text-blue-300 transition-colors duration-150 text-base'
-              "></i>
-            <span>{{ $t("Settings") }}</span>
-          </RouterLink>
+          Smart Gate
+        </button>
+        <button
+          @click="activeTab = 'camera360'"
+          :class="[
+            'flex-1 text-xs px-2 py-1.5 rounded-md transition-all duration-200 cursor-pointer',
+            activeTab === 'camera360'
+              ? 'bg-blue-600 text-white font-medium'
+              : 'text-gray-400 hover:text-gray-200'
+          ]">
+          Camera 360
+        </button>
+      </div>
+    </div>
+  </nav>
 
-          <a class="flex items-center px-4 py-2 text-sm text-gray-300 rounded-md hover:bg-white/10 hover:text-white group transition-colors duration-150 cursor-pointer"
-            @click="logout">
-            <i
-              class="pi pi-sign-out mr-3 text-gray-400 group-hover:text-blue-300 transition-colors duration-150 text-base"></i>
-            <span>{{ $t("Logout") }}</span>
-          </a>
+  <div
+    class="flex-1 flex flex-col overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-blue-800/40 scrollbar-track-transparent">
+    <div v-if="activeTab === 'smartgate'">
+      <div v-for="(alert, index) in displayedSmartGateAlerts" :key="'sg-' + index"
+        :class="`bg-red-900 border-t border-gray-700 p-3 cursor-pointer ${alert.active ? 'bg-opacity-80' : 'bg-opacity-50'} transform transition duration-300 hover:scale-105 hover:shadow-xl hover:bg-red-700`"
+        @click="viewDetails(alert)">
+        <div class="font-semibold">{{ alert.title }}</div>
+        <div class="text-sm flex items-center drop-shadow"> 
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-gray-300" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
+            <path d="M14 6a2 2 0 012-2h2a2 2 0 012 2v8a2 2 0 01-2 2h-2a2 2 0 01-2-2V6z" />
+          </svg>
+          {{ alert.name_camera }}
         </div>
 
-        <!-- Powered by -->
-        <div class="p-3 border-t border-white/10 text-xs text-center text-gray-500">
-          <div class="flex items-center justify-center space-x-2">
-            <div>
-              <div>POWERED BY</div>
-              <div class="font-bold text-blue-300 text-sm mt-1 tracking-wide">CPEG-AI</div>
-            </div>
-            <img :src="gifSrc" alt="My GIF" class="w-12 h-auto" />
-          </div>
+        <div class="flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-gray-300" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+          </svg>
+          <span class="text-sm drop-shadow">{{ alert.name_user ? alert.name_user : 'Test' }}</span>
         </div>
+
+        <div class="flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-gray-300" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd"
+              d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
+              clip-rule="evenodd" />
+          </svg>
+          <span class="text-sm drop-shadow">{{ alert.location }}</span>
+        </div>
+        <div class="flex items-center mt-1">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-gray-300" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
+              clip-rule="evenodd" />
+          </svg>
+          <span class="text-sm drop-shadow">{{ alert.time }}</span>
+        </div>
+      </div>
+
+      <div v-if="displayedSmartGateAlerts.length === 0" class="p-6 text-center text-gray-400">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-3 text-gray-500" fill="none"
+          viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+        <p>No Smart Gate alerts to display</p>
       </div>
     </div>
 
-    <!-- Smart Gate Details Modal -->
-    <teleport to="body">
-      <div v-if="selectedLog && activeTab === 'smartgate'"
-        class="fixed inset-0 bg-opacity-50 flex items-center justify-center p-4 z-50 bg-black/50 backdrop-blur-sm">
-        <div class="bg-gray-800 rounded-lg p-6 max-w-2xl w-full" @click.stop>
-          <h3 class="text-xl font-bold mb-4">Event Log Details</h3>
-          <div class="grid grid-cols-2 gap-4">
-            <div><strong>ID:</strong> {{ selectedLog.ID }}</div>
-            <div><strong>Name:</strong> {{ selectedLog.name_user ? selectedLog.name_user : 'Test' }}</div>
-            <div>
-              <strong>DateTime:</strong> {{ new Date(selectedLog.time).toLocaleString() }}
-            </div>
-            <div><strong>Camera:</strong> {{ selectedLog.name_camera }}</div>
-            <div><strong>Location:</strong> {{ selectedLog.location }}</div>
-            <div><strong>Error Code:</strong> {{ selectedLog.title }}</div>
-            <div><strong>Status:</strong> {{ selectedLog.Status }}</div>
-            <div v-if="selectedLog.description" class="col-span-2">
-              <strong>Description:</strong> {{ selectedLog.description }}
-            </div>
-            <div v-if="selectedLog.img_url" class="col-span-2">
-              <strong>Image:</strong>
-              <img :src="selectedLog.img_url" alt="Error image" class="mt-2 max-w-full h-auto" />
-            </div>
-            <div v-if="selectedLog.videoPath && selectedLog.baseUrl" class="col-span-2">
-              <strong>Video: </strong>
-              <video controls class="mt-2 max-w-full h-auto">
-                <source :src="`${selectedLog.baseUrl}/${selectedLog.videoPath}`" type="video/mp4" />
-              </video>
-            </div>
-          </div>
+    <div v-if="activeTab === 'camera360'">
+      <div v-for="(alarm, index) in displayedCamera360Alarms" :key="'c360-' + index"
+        :class="`bg-red-900 border-t border-gray-700 p-3 cursor-pointer bg-opacity-80 transform transition duration-300 hover:scale-105 hover:shadow-xl hover:bg-red-700`"
+        @click="viewCamera360Details(alarm)">
+        <div class="font-semibold">{{ alarm.error_detail }}</div>
+        
+        <div class="text-sm flex items-center drop-shadow"> 
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-gray-300" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
+            <path d="M14 6a2 2 0 012-2h2a2 2 0 012 2v8a2 2 0 01-2 2h-2a2 2 0 01-2-2V6z" />
+          </svg>
+          {{ alarm.camera_name || 'Unknown' }}
+        </div>
 
-          <div class="mt-4 flex items-center justify-between">
-            <div v-if="selectedLog.Status === 'Pending'" class="space-x-2">
-              <Button label="Accept" severity="success" size="small" @click="accept(selectedLog)" />
-              <Button label="Decline" severity="danger" size="small" @click="decline(selectedLog)" />
-            </div>
-            <div v-else>
-              <Button :label="selectedLog.Status" :severity="selectedLog.Status === 'OK' ? 'success' : 'danger'"
-                size="small" disabled />
-            </div>
-            <button class="px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-700" @click="selectedLog = null">
-              Close
-            </button>
-          </div>
+        <div class="flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-gray-300" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd"
+              d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
+              clip-rule="evenodd" />
+          </svg>
+          <span class="text-sm drop-shadow">{{ alarm.location }}</span>
+        </div>
+
+        <div class="flex items-center mt-1">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-gray-300" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
+              clip-rule="evenodd" />
+          </svg>
+          <span class="text-sm drop-shadow">{{ alarm.timestamp }}</span>
         </div>
       </div>
-    </teleport>
 
-    <!-- Camera 360 Details Modal -->
-    <teleport to="body">
-      <div v-if="selectedCamera360Alarm"
-        class="fixed inset-0 bg-opacity-50 flex items-center justify-center p-4 z-50 bg-black/50 backdrop-blur-sm">
-        <div class="bg-gray-800 rounded-lg p-6 max-w-2xl w-full" @click.stop>
-  <h3 class="text-xl font-bold mb-4 text-white">Camera 360 Alarm Details</h3>
-  <div class="grid grid-cols-2 gap-4 text-white">
-    <!-- Cột trái -->
-    <div><strong>ID:</strong> {{ selectedCamera360Alarm.id }}</div>
-    <div><strong>Location:</strong> {{ selectedCamera360Alarm.location }}</div>
-    
-    <!-- Cột phải -->
-    <div><strong>Camera:</strong> {{ selectedCamera360Alarm.camera_name || 'Unknown' }}</div>
-    <div><strong>Date Time:</strong> {{ selectedCamera360Alarm.timestamp }}</div>
-    
-    <!-- Hàng thứ 3 -->
-    <div><strong>Status: </strong> 
-      <span :class="getStatusColor(selectedCamera360Alarm.status)">
-        {{ getStatusText(selectedCamera360Alarm.status) }}
-      </span>
-    </div>
-    <div v-if="selectedCamera360Alarm.error_detail">
-      <strong>Error Code:</strong> {{ selectedCamera360Alarm.error_detail }}
-    </div>
-    
-    <!-- Video full width -->
-    <div v-if="selectedCamera360Alarm.video_error" class="col-span-2">
-      <strong>Video:</strong>
-      <video controls class="mt-2 max-w-full h-auto rounded-lg">
-        <source :src="camera360ErrorVideoUrl" type="video/mp4" />
-      </video>
+      <div v-if="displayedCamera360Alarms.length === 0" class="p-6 text-center text-gray-400">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-3 text-gray-500" fill="none"
+          viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+        <p>No Camera 360 alarms to display</p>
+      </div>
     </div>
   </div>
 
-  <div class="mt-4 flex items-center justify-between">
-    <div v-if="selectedCamera360Alarm.status === 0" class="space-x-2">
-      <Button label="Accept" severity="success" size="small" @click="acceptCamera360WorkerEvent(selectedCamera360Alarm)" />
-      <Button label="Decline" severity="danger" size="small" @click="declineCamera360WorkerEvent(selectedCamera360Alarm)" />
-    </div>
-    <div v-else-if="selectedCamera360Alarm.status === 1">
-      <Button label="Accepted" severity="success" size="small" disabled />
-    </div>
-    <div v-else-if="selectedCamera360Alarm.status === 2">
-      <Button label="Declined" severity="danger" size="small" disabled />
-    </div>
-    <div v-else>
-      <Button label="Confirmed" severity="success" size="small" disabled />
-    </div>
-    <button class="px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-700" @click="selectedCamera360Alarm = null">
-      Close
-    </button>
-  </div>
-</div>
-      </div>
-    </teleport>
+  <div class="pt-1 pb-2 border-t border-white/10">
+    <RouterLink to="/settings" :class="[
+      'flex items-center px-4 py-2 text-sm transition-all duration-300',
+      route.path === '/settings'
+        ? 'font-medium bg-gradient-to-r from-blue-700/50 to-transparent text-white border-l-4 border-blue-400'
+        : 'text-gray-300 rounded-md hover:bg-white/10 hover:text-white group transition-colors duration-150',
+    ]">
+      <i class="pi pi-cog mr-3" :class="route.path === '/settings'
+        ? 'text-base'
+        : 'text-gray-400 group-hover:text-blue-300 transition-colors duration-150 text-base'
+        "></i>
+      <span>{{ $t("Settings") }}</span>
+    </RouterLink>
 
-  </aside>
+    <a class="flex items-center px-4 py-2 text-sm text-gray-300 rounded-md hover:bg-white/10 hover:text-white group transition-colors duration-150 cursor-pointer"
+      @click="logout">
+      <i class="pi pi-sign-out mr-3 text-gray-400 group-hover:text-blue-300 transition-colors duration-150 text-base"></i>
+      <span>{{ $t("Logout") }}</span>
+    </a>
+  </div>
+
+  <div class="p-3 border-t border-white/10 text-xs text-center text-gray-500">
+    <div class="flex items-center justify-center space-x-2">
+      <div>
+        <div>POWERED BY</div>
+        <div class="font-bold text-blue-300 text-sm mt-1 tracking-wide">CPEG-AI</div>
+      </div>
+      <img :src="gifSrc" alt="My GIF" class="w-12 h-auto" />
+    </div>
+  </div>
+
+  <teleport to="body">
+    <div v-if="selectedLog && activeTab === 'smartgate'"
+      class="fixed inset-0 bg-opacity-50 flex items-center justify-center p-4 z-50 bg-black/50 backdrop-blur-sm">
+      <div class="bg-gray-800 rounded-lg p-6 max-w-2xl w-full" @click.stop>
+        <h3 class="text-xl font-bold mb-4">Event Log Details</h3>
+        <div class="grid grid-cols-2 gap-4">
+          <div><strong>ID:</strong> {{ selectedLog.ID }}</div>
+          <div><strong>Name:</strong> {{ selectedLog.name_user ? selectedLog.name_user : 'Test' }}</div>
+          <div>
+            <strong>DateTime:</strong> {{ new Date(selectedLog.time).toLocaleString() }}
+          </div>
+          <div><strong>Camera:</strong> {{ selectedLog.name_camera }}</div>
+          <div><strong>Location:</strong> {{ selectedLog.location }}</div>
+          <div><strong>Error Code:</strong> {{ selectedLog.title }}</div>
+          <div><strong>Status:</strong> {{ selectedLog.Status }}</div>
+          <div v-if="selectedLog.description" class="col-span-2">
+            <strong>Description:</strong> {{ selectedLog.description }}
+          </div>
+          <div v-if="selectedLog.img_url" class="col-span-2">
+            <strong>Image:</strong>
+            <img :src="selectedLog.img_url" alt="Error image" class="mt-2 max-w-full h-auto" />
+          </div>
+          <div v-if="selectedLog.videoPath && selectedLog.baseUrl" class="col-span-2">
+            <strong>Video: </strong>
+            <video controls class="mt-2 max-w-full h-auto">
+              <source :src="`${selectedLog.baseUrl}/${selectedLog.videoPath}`" type="video/mp4" />
+            </video>
+          </div>
+        </div>
+
+        <div class="mt-4 flex items-center justify-between">
+          <div v-if="selectedLog.Status === 'Pending'" class="space-x-2">
+            <Button label="Accept" severity="success" size="small" @click="accept(selectedLog)" />
+            <Button label="Decline" severity="danger" size="small" @click="decline(selectedLog)" />
+          </div>
+          <div v-else>
+            <Button :label="selectedLog.Status" :severity="selectedLog.Status === 'OK' ? 'success' : 'danger'"
+              size="small" disabled />
+          </div>
+          <button class="px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-700" @click="selectedLog = null">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  </teleport>
+
+  <teleport to="body">
+    <div v-if="selectedCamera360Alarm"
+      class="fixed inset-0 bg-opacity-50 flex items-center justify-center p-4 z-50 bg-black/50 backdrop-blur-sm">
+      <div class="bg-gray-800 rounded-lg p-6 max-w-2xl w-full" @click.stop>
+        <h3 class="text-xl font-bold mb-4 text-white">Camera 360 Alarm Details</h3>
+        <div class="grid grid-cols-2 gap-4 text-white">
+          <div><strong>ID:</strong> {{ selectedCamera360Alarm.id }}</div>
+          <div><strong>Location:</strong> {{ selectedCamera360Alarm.location }}</div>
+          
+          <div><strong>Camera:</strong> {{ selectedCamera360Alarm.camera_name || 'Unknown' }}</div>
+          <div><strong>Date Time:</strong> {{ selectedCamera360Alarm.timestamp }}</div>
+          
+          <div><strong>Status: </strong> 
+            <span :class="getStatusColor(selectedCamera360Alarm.status)">
+              {{ getStatusText(selectedCamera360Alarm.status) }}
+            </span>
+          </div>
+          <div v-if="selectedCamera360Alarm.error_detail">
+            <strong>Error Code:</strong> {{ selectedCamera360Alarm.error_detail }}
+          </div>
+          
+          <div v-if="selectedCamera360Alarm.video_error" class="col-span-2">
+            <strong>Video:</strong>
+            <video controls class="mt-2 max-w-full h-auto rounded-lg">
+              <source :src="camera360ErrorVideoUrl" type="video/mp4" />
+            </video>
+          </div>
+        </div>
+
+        <div class="mt-4 flex items-center justify-between">
+          <div v-if="selectedCamera360Alarm.status === 0" class="space-x-2">
+            <Button label="Accept" severity="success" size="small" @click="acceptCamera360WorkerEvent(selectedCamera360Alarm)" />
+            <Button label="Decline" severity="danger" size="small" @click="declineCamera360WorkerEvent(selectedCamera360Alarm)" />
+          </div>
+          <div v-else-if="selectedCamera360Alarm.status === 1">
+            <Button label="Accepted" severity="success" size="small" disabled />
+          </div>
+          <div v-else-if="selectedCamera360Alarm.status === 2">
+            <Button label="Declined" severity="danger" size="small" disabled />
+          </div>
+          <div v-else>
+            <Button label="Confirmed" severity="success" size="small" disabled />
+          </div>
+          <button class="px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-700 hover:cursor:pointer" @click="selectedCamera360Alarm = null">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  </teleport>
+
+</aside>
 </template>
 
 <script setup>

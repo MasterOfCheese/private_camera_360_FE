@@ -9,7 +9,7 @@
       playsinline
       no-controls
       crossorigin="anonymous"
-      class="object-cover"
+      class="object-fill"
       loop
       :class="{
         'w-full h-full': props.pano !== 1,

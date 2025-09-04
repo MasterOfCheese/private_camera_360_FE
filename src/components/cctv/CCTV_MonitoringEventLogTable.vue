@@ -757,17 +757,17 @@ const logs = ref([
 // }
 
 // Lifecycle hooks
-onMounted(() => {
-  // Lấy giá trị đã lưu trong localStorage và cập nhật selectedSource
-  const savedSource = localStorage.getItem('selectedSource');
-  if (savedSource) {
-    selectedSource.value = savedSource;
-  }
-})
+// onMounted(() => {
+//   // Lấy giá trị đã lưu trong localStorage và cập nhật selectedSource
+//   const savedSource = localStorage.getItem('selectedSource');
+//   if (savedSource) {
+//     selectedSource.value = savedSource;
+//   }
+// })
 
 watch(selectedSource, (newValue, oldValue) => {
   // console.log(`🔄 Watch triggered: ${oldValue} -> ${newValue}`);
-  localStorage.setItem('selectedSource', newValue);
+  // localStorage.setItem('selectedSource', newValue);
   fetchLogs();
 }, { immediate: true });
 
