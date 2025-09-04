@@ -4,31 +4,116 @@
       <!-- <h2 class="text-2xl font-bold mb-6">Event Logs</h2> -->
 
       <!-- Filters -->
-      <div class="mb-4 flex gap-4">
-        <div>
-          <h2 class="text-2xl font-bold mr-4">{{ $t("Event_Logs") }}</h2>
-        </div>
-        <select v-model="filters.status"
-          class="bg-gray-800 border-gray-700 text-gray-100 rounded-lg p-2 focus:ring-2 focus:ring-blue-500"
-          @change="applyFilters()">
-          <option value="">All Status</option>
-          <option value="Pending">Pending</option>
-          <option value="OK">OK</option>
-          <option value="NG">NG</option>
-        </select>
-        <input v-model="filters.camera" :placeholder="$t('Filter_by_camera')"
-          class="bg-gray-800 border-gray-700 text-gray-100 rounded-lg p-2 focus:ring-2 focus:ring-blue-500"
-          @input="applyFilters()" />
-        <input v-model="filters.id" :placeholder="$t('Filter_by_ID')"
-          class="bg-gray-800 border-gray-700 text-gray-100 rounded-lg p-2 focus:ring-2 focus:ring-blue-500"
-          @input="applyFilters()" />
-        <input v-model="filters.error_code" :placeholder="$t('Filter_by_error_code')"
-          class="bg-gray-800 border-gray-700 text-gray-100 rounded-lg p-2 focus:ring-2 focus:ring-blue-500"
-          @input="applyFilters()" />
-        <input v-model="filters.location" :placeholder="$t('Filter_by_location')"
-          class="bg-gray-800 border-gray-700 text-gray-100 rounded-lg p-2 focus:ring-2 focus:ring-blue-500"
-          @input="applyFilters()" />
+      <!-- Responsive Filters Section -->
+    <div class="mb-4 space-y-4">
+      <!-- Title Row -->
+      <div class="flex items-center justify-between">
+        <h2 class="text-xl md:text-2xl font-bold">{{ $t("Event_Logs") }}</h2>
       </div>
+
+      <!-- Filters Grid - Responsive Layout -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
+        <!-- Status Filter -->
+        <div class="sm:col-span-1">
+          <select v-model="filters.status"
+            class="w-full bg-gray-800 border-gray-700 text-gray-100 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hover:cursor-pointer"
+            @change="applyFilters()">
+            <option value="">All Status</option>
+            <option value="Pending">Pending</option>
+            <option value="OK">OK</option>
+            <option value="NG">NG</option>
+          </select>
+        </div>
+
+        <!-- Camera Filter -->
+        <div class="sm:col-span-1">
+          <input v-model="filters.camera" 
+            :placeholder="$t('Filter_by_camera')"
+            class="w-full bg-gray-800 border-gray-700 text-gray-100 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            @input="applyFilters()" />
+        </div>
+
+        <!-- ID Filter -->
+        <div class="sm:col-span-1 lg:col-span-1">
+          <input v-model="filters.id" 
+            :placeholder="$t('Filter_by_ID')"
+            class="w-full bg-gray-800 border-gray-700 text-gray-100 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            @input="applyFilters()" />
+        </div>
+
+        <!-- Error Code Filter -->
+        <div class="sm:col-span-1 lg:col-span-1">
+          <input v-model="filters.error_code" 
+            :placeholder="$t('Filter_by_error_code')"
+            class="w-full bg-gray-800 border-gray-700 text-gray-100 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            @input="applyFilters()" />
+        </div>
+
+        <!-- Location Filter -->
+        <div class="sm:col-span-1 lg:col-span-1">
+          <input v-model="filters.location" 
+            :placeholder="$t('Filter_by_location')"
+            class="w-full bg-gray-800 border-gray-700 text-gray-100 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            @input="applyFilters()" />
+        </div>
+
+        <!-- Data Source Selector -->
+        <div class="sm:col-span-1 lg:col-span-1">
+          <select v-model="selectedSource"
+            class="w-full bg-gray-800 border-gray-700 text-gray-100 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hover:cursor-pointer">
+            <option value="notification_stats">Smart Gate</option>
+            <option value="worker_events">Camera 360</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Mobile Filters Toggle (Optional - for very small screens) -->
+      <div class="sm:hidden">
+        <button @click="showMobileFilters = !showMobileFilters" 
+          class="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-gray-700 text-gray-200 rounded-lg hover:bg-gray-600 transition-colors">
+          <span>{{ showMobileFilters ? 'Hide' : 'Show' }} Filters</span>
+          <svg class="w-4 h-4 transition-transform" :class="{ 'rotate-180': showMobileFilters }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+          </svg>
+        </button>
+        
+        <!-- Collapsible Mobile Filters -->
+        <div v-if="showMobileFilters" class="mt-3 space-y-3 p-4 bg-gray-800 rounded-lg border border-gray-700">
+          <div class="grid grid-cols-1 gap-3">
+            <select v-model="filters.status"
+              class="w-full bg-gray-700 border-gray-600 text-gray-100 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
+              @change="applyFilters()">
+              <option value="">All Status</option>
+              <option value="Pending">Pending</option>
+              <option value="OK">OK</option>
+              <option value="NG">NG</option>
+            </select>
+
+            <input v-model="filters.camera" :placeholder="$t('Filter_by_camera')"
+              class="w-full bg-gray-700 border-gray-600 text-gray-100 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
+              @input="applyFilters()" />
+
+            <input v-model="filters.id" :placeholder="$t('Filter_by_ID')"
+              class="w-full bg-gray-700 border-gray-600 text-gray-100 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
+              @input="applyFilters()" />
+
+            <input v-model="filters.error_code" :placeholder="$t('Filter_by_error_code')"
+              class="w-full bg-gray-700 border-gray-600 text-gray-100 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
+              @input="applyFilters()" />
+
+            <input v-model="filters.location" :placeholder="$t('Filter_by_location')"
+              class="w-full bg-gray-700 border-gray-600 text-gray-100 rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
+              @input="applyFilters()" />
+
+            <select v-model="selectedSource"
+              class="w-full bg-gray-700 border-gray-600 text-gray-100 rounded-lg p-3 focus:ring-2 focus:ring-blue-500">
+              <option value="notification_stats">Notification Stats</option>
+              <option value="worker_events">Worker Events</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
 
       <!-- Table -->
       <div class="overflow-x-auto rounded-lg border border-gray-700">
@@ -138,7 +223,7 @@
           <div class="flex items-center space-x-2">
             <!-- Nút Previous -->
             <button @click="prevPage()" :disabled="currentPage <= 1"
-              class="px-3 py-1 rounded bg-gray-700 text-gray-300 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed">
+              class="px-3 py-1 rounded bg-gray-700 text-gray-300 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:cursor-pointer">
               &laquo; Previous
             </button>
 
@@ -146,7 +231,7 @@
             <template v-for="(pageNum, index) in displayedPages" :key="index">
               <span v-if="pageNum === '...'" class="px-3 py-1 text-gray-400">...</span>
               <button v-else @click="goToPage(pageNum)" :class="[
-                'px-3 py-1 rounded',
+                'px-3 py-1 rounded hover:cursor-pointer',
                 currentPage === pageNum
                   ? 'bg-blue-600 text-white'
                   : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
@@ -157,7 +242,7 @@
 
             <!-- Nút Next -->
             <button @click="nextPage()" :disabled="currentPage >= totalPages"
-              class="px-3 py-1 rounded bg-gray-700 text-gray-300 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed">
+              class="px-3 py-1 rounded bg-gray-700 text-gray-300 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:cursor-pointer">
               Next &raquo;
             </button>
           </div>
@@ -166,7 +251,7 @@
           <div class="flex items-center space-x-2">
             <span class="text-sm text-gray-400">Display:</span>
             <select v-model="pageSize" @change="goToPage(1)"
-              class="bg-gray-700 text-gray-300 rounded px-2 py-1 border border-gray-600">
+              class="bg-gray-700 text-gray-300 rounded px-2 py-1 border border-gray-600 hover:cursor-pointer">
               <option value="10">10</option>
               <option value="20">20</option>
               <option value="50">50</option>
@@ -194,14 +279,14 @@
             <div v-if="selectedLog.description" class="col-span-2">
               <strong>Description:</strong> {{ selectedLog.description }}
             </div>
-            <div v-if="selectedLog.img_url" class="col-span-2">
+            <!-- <div v-if="selectedLog.img_url" class="col-span-2">
               <strong>Image:</strong>
               <img :src="selectedLog.img_url" alt="Error image" class="mt-2 max-w-full h-auto" />
-            </div>
+            </div> -->
             <div v-if="selectedLog.videoPath && selectedLog.baseUrl" class="col-span-2">
               <strong>Video:</strong>
               <video controls class="mt-2 max-w-full h-auto">
-                <source :src="`${selectedLog.baseUrl}/${selectedLog.videoPath}`" type="video/mp4" />
+                <source :src="`${selectedLog.videoPath}`" type="video/mp4" />
               </video>
             </div>
 
@@ -241,6 +326,8 @@ const allLogs = ref([])
 const filteredLogs = ref([])
 const selectedLog = ref(null)
 
+// data source
+const selectedSource = ref('notification_stats') // Mặc định là notification_stats
 
 // Sorting & Filtering
 const sort = ref({
@@ -313,81 +400,128 @@ const displayedPages = computed(() => {
   return pages
 })
 
+let currentFetchId = 0;
+
 // Methods
 const fetchLogs = async () => {
+  // Tạo ID duy nhất cho lần fetch này
+  const fetchId = ++currentFetchId;
+  // console.log(`🔄 fetchLogs #${fetchId} called for source: ${selectedSource.value}`);
+  
   isLoading.value = true;
+  allLogs.value = [];
+  filteredLogs.value = [];
 
   try {
-    // Lấy danh sách camera
-    const cameras = await fetchWrapper.get(`${window.appConfig.apiUrl}/v1/cameras/?limit=100`);
-    console.log("Fetching camera :", `${window.appConfig.apiUrl}/v1/cameras/?limit=100`);
-    console.log("Camera data :", cameras);
+    let combinedResults = [];
 
-    const urlToCameraName = {};
-    cameras.forEach(camera => {
-      try {
-        if (!camera.statistic_api_url) return;
-        let apiUrl = camera.statistic_api_url.trim();
-        if (!apiUrl.startsWith('http://') && !apiUrl.startsWith('https://')) {
-          apiUrl = 'http://' + apiUrl;
-        }
-        const baseUrl = new URL(apiUrl).origin;
-        console.log("baseUrl:", baseUrl);
-        urlToCameraName[baseUrl] = camera.name;
-      } catch (error) {
-        console.error(`Invalid URL in camera ${camera.name}:`, camera.statistic_api_url, error);
+    if (selectedSource.value === 'notification_stats') {
+      // console.log(`📡 #${fetchId} Fetching notification_stats...`);
+      
+      const cameras = await fetchWrapper.get(`${window.appConfig.apiUrl}/v1/cameras/?limit=100`);
+      
+      // Kiểm tra xem có phải fetch mới nhất không
+      if (fetchId !== currentFetchId) {
+        console.log(`🚫 #${fetchId} Aborted - newer fetch in progress`);
+        return;
       }
-    });
-
-    // Lấy tất cả URL hợp lệ (không null, không trùng)
-    const statisticUrls = Object.keys(urlToCameraName);
-
-    const allResults = await Promise.all(
-      statisticUrls.map(async (baseUrl) => {
+      
+      const urlToCameraName = cameras.reduce((map, camera) => {
         try {
-          const response = await fetch(`${baseUrl}/notification_stats?query=all`, {
-            method: 'GET',
-          });
-
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+          if (!camera.statistic_api_url) return map;
+          let apiUrl = camera.statistic_api_url.trim();
+          if (!apiUrl.startsWith('http://') && !apiUrl.startsWith('https://')) {
+            apiUrl = 'http://' + apiUrl;
           }
-
-          const data = await response.json();
-          const results = Array.isArray(data) ? data : (data.results || []);
-
-          // console.log(`Fetched results from ${baseUrl}:`, results);
-
-          // Thêm trường 'baseUrl' vào mỗi bản ghi log
-          return results.map(item => ({
-            ...item,
-            camera: urlToCameraName[baseUrl] || 'Unknown',
-            baseUrl,  // Lưu baseUrl ở đây
-          }));
+          const baseUrl = new URL(apiUrl).origin;
+          map[baseUrl] = camera.name;
         } catch (error) {
-          console.error(`Error fetching from ${baseUrl}:`, error);
-          return [];
+          console.error(`Invalid URL in camera ${camera.name}:`, camera.statistic_api_url, error);
         }
-      })
-    );
+        return map;
+      }, {});
+      
+      const statisticUrls = Object.keys(urlToCameraName);
+      const allNotificationResults = await Promise.all(
+        statisticUrls.map(async (baseUrl) => {
+          try {
+            const response = await fetch(`${baseUrl}/notification_stats?query=all`, { method: 'GET' });
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            const data = await response.json();
+            const results = Array.isArray(data) ? data : (data.results || []);
+            return results.map(item => ({
+              ...item,
+              camera: urlToCameraName[baseUrl] || 'Unknown',
+              baseUrl,
+              source: 'notification_stats'
+            }));
+          } catch (error) {
+            console.error(`Error fetching from ${baseUrl}:`, error);
+            return [];
+          }
+        })
+      );
+      
+      combinedResults = allNotificationResults.flat();
 
-    // Gộp tất cả kết quả
-    const combinedResults = allResults.flat();
+    } else if (selectedSource.value === 'worker_events') {
+      // console.log(`📡 #${fetchId} Fetching worker_events...`);
+      
+      const workerEvents = await fetchWrapper.get(`${window.appConfig.apiUrl}/v1/cameras/worker-events`);
+      
+      // Kiểm tra xem có phải fetch mới nhất không
+      if (fetchId !== currentFetchId) {
+        // console.log(`🚫 #${fetchId} Aborted - newer fetch in progress`);
+        return;
+      }
+      
+      const processedWorkerEvents = Array.isArray(workerEvents) ? workerEvents : (workerEvents.data || []);
+      combinedResults = processedWorkerEvents.map(item => {
+        let statusText = '';
+        switch (item.status) {
+          case 0: statusText = 'Pending'; break;
+          case 1: statusText = 'OK'; break;
+          case 2: statusText = 'NG'; break;
+          default: statusText = 'Unknown';
+        }
+        return {
+          ID: item.id,
+          originalID: item.id,
+          name: 'Abnormal Event',
+          datetime: item.timestamp,
+          camera: item.camera_name,
+          location: item.location,
+          Irregularity: item.error_detail,
+          Status: statusText,
+          img_url: `${window.appConfig.apiUrl}/${item.img_error}`,
+          videoPath: `${window.appConfig.apiUrl}/${item.video_error}`,
+          ai_log_path: `${window.appConfig.apiUrl}/${item.ai_log_path}`,
+          baseUrl: window.appConfig.apiUrl,
+          source: 'worker_events'
+        };
+      });
+    }
 
-    // Sắp xếp theo datetime mới nhất
-    allLogs.value = combinedResults.sort((a, b) => {
-      return new Date(b.datetime) - new Date(a.datetime);
-    });
+    // Kiểm tra lần cuối trước khi set results
+    if (fetchId !== currentFetchId) {
+      // console.log(`🚫 #${fetchId} Aborted before setting results`);
+      return;
+    }
 
-    console.log(`Total logs combined: ${allLogs.value.length}`);
+    allLogs.value = combinedResults.sort((a, b) => new Date(b.datetime) - new Date(a.datetime));
+
+    // console.log(`✅ #${fetchId} Successfully fetched from ${selectedSource.value}: ${allLogs.value.length} logs`);
 
     applyFilters();
   } catch (error) {
-    console.error('Error in fetchLogs:', error);
+    console.error(`❌ #${fetchId} Error in fetchLogs:`, error);
     allLogs.value = [];
     filteredLogs.value = [];
   } finally {
-    isLoading.value = false;
+    // Chỉ set loading = false nếu đây là fetch mới nhất
+    if (fetchId === currentFetchId) {
+      isLoading.value = false;
+    }
   }
 };
 
@@ -487,39 +621,101 @@ const viewDetails = (log) => {
   console.log("selectedLog.value ::: ", selectedLog);
 }
 
+// Ánh xạ trạng thái hiển thị với tên endpoint của backend
+const actionEndpoints = {
+  'OK': 'accept',
+  'NG': 'decline'
+};
 
+async function postNotification(log, action) {
+  let url_post;
+  let method_post = 'POST';
+  let body_data;
 
-async function postNotification(log, action, status) {
-  const url_post = `${log.baseUrl}/notification_action`;
+  // Ánh xạ trạng thái hiển thị với tên endpoint của backend
+  const actionEndpoints = {
+    'OK': 'accept',
+    'NG': 'decline'
+  };
+
+  // Kiểm tra nguồn dữ liệu để chọn URL và phương thức phù hợp
+  if (log.source === 'worker_events') {
+    const endpointAction = actionEndpoints[action];
+    if (!endpointAction) {
+      console.error("Unknown action:", action);
+      return;
+    }
+    url_post = `${window.appConfig.apiUrl}/v1/cameras/worker-events/${log.originalID}/${endpointAction}`;
+    method_post = 'PATCH';
+    
+    body_data = {
+      employee_confirm_id: "your_employee_id_here",
+      client_ip: null
+    };
+
+  } else if (log.source === 'notification_stats') {
+    url_post = `${log.baseUrl}/notification_action`;
+    body_data = {
+      ID: log.ID,
+      action: action,
+      status: log.Status
+    };
+  } else {
+    console.error("Unknown log source:", log.source);
+    return;
+  }
+
   const confirmMessage = "Are you sure you want to perform this action?";
-
   if (!confirm(confirmMessage)) {
     return;
   }
 
   try {
     const response = await fetch(url_post, {
-      method: 'POST',
+      method: method_post,
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        ID: log.ID,
-        action: action,   // "OK" hoặc "NG"
-        status: status    // "Violation" hoặc "Alert"
-      })
+      body: JSON.stringify(body_data)
     });
 
     const data = await response.json();
     console.log("response ::: ", data);
 
     if (response.ok) {
-      // Sau khi thành công thì cập nhật Status trực tiếp
-      log.Status = action; // <-- CHỈ CẦN ĐỔI action vào log.Status
+      // ✅ CẬP NHẬT UI NGAY LẬP TỨC
+      
+      // 1. Cập nhật selectedLog (cho popup)
+      if (selectedLog.value && selectedLog.value.ID === log.ID) {
+        selectedLog.value.Status = action;
+      }
+      
+      // 2. Cập nhật trong allLogs
+      const logIndex = allLogs.value.findIndex(item => item.ID === log.ID && item.source === log.source);
+      if (logIndex !== -1) {
+        allLogs.value[logIndex].Status = action;
+      }
+      
+      // 3. Cập nhật trong filteredLogs
+      const filteredLogIndex = filteredLogs.value.findIndex(item => item.ID === log.ID && item.source === log.source);
+      if (filteredLogIndex !== -1) {
+        filteredLogs.value[filteredLogIndex].Status = action;
+      }
+      
+      // 4. Cập nhật DOM element trực tiếp (nếu cần thiết)
+      const statusElement = document.getElementById(`status-${log.ID}`);
+      if (statusElement) {
+        statusElement.textContent = action;
+      }
+      
+      console.log(`✅ UI updated immediately for log ${log.ID} with status: ${action}`);
+      
+      // Optional: Vẫn có thể refresh data để đồng bộ với server (chạy background)
+      // fetchLogs();
+      
     } else {
       console.error("Lỗi server ::: ", data.detail || data);
     }
-
   } catch (error) {
     console.error("Lỗi ngoại lệ: ", error);
   }
@@ -541,12 +737,12 @@ const getErrorCodeClass = (code) => {
 
 // Khi nhấn Accept
 function accept(log) {
-  postNotification(log, 'OK', 'Violation');
+  postNotification(log, 'OK');
 }
 
 // Khi nhấn Decline
 function decline(log) {
-  postNotification(log, 'NG', 'Alert');
+  postNotification(log, 'NG');
 }
 
 // Giả sử bạn có 1 danh sách logs lấy từ API
@@ -562,10 +758,20 @@ const logs = ref([
 
 // Lifecycle hooks
 onMounted(() => {
-  fetchLogs()
+  // Lấy giá trị đã lưu trong localStorage và cập nhật selectedSource
+  const savedSource = localStorage.getItem('selectedSource');
+  if (savedSource) {
+    selectedSource.value = savedSource;
+  }
 })
 
-// Watch for pageSize changes
+watch(selectedSource, (newValue, oldValue) => {
+  // console.log(`🔄 Watch triggered: ${oldValue} -> ${newValue}`);
+  localStorage.setItem('selectedSource', newValue);
+  fetchLogs();
+}, { immediate: true });
+
+// Watch for pageSize changes (giữ nguyên)
 watch(pageSize, () => {
   goToPage(1)
 })
