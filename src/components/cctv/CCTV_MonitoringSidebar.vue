@@ -903,11 +903,11 @@ const acceptCamera360WorkerEvent = async (workerEvent) => {
   try {
     const url = `${window.appConfig.apiUrl}/v1/cameras/worker-events/${workerEvent.id}/accept`;
     
-    // Payload đơn giản giống hệt Smart Gate
+    // Simplified payload - remove status field
     const payload = {
       ID: workerEvent.id,
-      action: "OK",
-      status: "Pending"
+      action: "OK"
+      // Remove: status: "Pending"
     };
 
     const response = await fetch(url, {
@@ -927,7 +927,7 @@ const acceptCamera360WorkerEvent = async (workerEvent) => {
     const data = await response.json();
     console.log("Camera 360 accept success:", data);
 
-    // Cập nhật UI
+    // Update UI
     workerEvent.status = 1;
     await fetchCamera360WorkerEvents();
     
@@ -947,11 +947,11 @@ const declineCamera360WorkerEvent = async (workerEvent) => {
   try {
     const url = `${window.appConfig.apiUrl}/v1/cameras/worker-events/${workerEvent.id}/decline`;
     
-    // Payload đơn giản giống hệt Smart Gate
+    // Simplified payload - remove status field
     const payload = {
       ID: workerEvent.id,
-      action: "NG",
-      status: "Pending"
+      action: "NG"
+      // Remove: status: "Pending"
     };
 
     const response = await fetch(url, {
@@ -971,7 +971,7 @@ const declineCamera360WorkerEvent = async (workerEvent) => {
     const data = await response.json();
     console.log("Camera 360 decline success:", data);
 
-    // Cập nhật UI
+    // Update UI
     workerEvent.status = 2;
     await fetchCamera360WorkerEvents();
     

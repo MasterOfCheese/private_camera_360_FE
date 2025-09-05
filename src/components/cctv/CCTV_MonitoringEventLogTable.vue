@@ -638,7 +638,7 @@ async function postNotification(log, action) {
   };
 
   if (log.source === 'worker_events') {
-    // CAMERA 360 - Payload giống hệt Smart Gate
+    // CAMERA 360 - Remove status field from payload
     const endpointAction = actionEndpoints[action];
     if (!endpointAction) {
       console.error("Unknown action:", action);
@@ -648,20 +648,20 @@ async function postNotification(log, action) {
     url_post = `${window.appConfig.apiUrl}/v1/cameras/worker-events/${log.originalID}/${endpointAction}`;
     method_post = 'PATCH';
     
-    // Payload hoàn toàn giống Smart Gate
+    // Simplified payload - remove status field
     body_data = {
       ID: log.originalID,
-      action: action,
-      status: log.Status
+      action: action
+      // Remove: status: log.Status
     };
 
   } else if (log.source === 'notification_stats') {
-    // SMART GATE - Giữ nguyên
+    // SMART GATE - Keep existing format
     url_post = `${log.baseUrl}/notification_action`;
     body_data = {
       ID: log.ID,
       action: action,
-      status: log.Status
+      status: log.Status  // Keep this for Smart Gate
     };
   } else {
     console.error("Unknown log source:", log.source);
@@ -693,7 +693,7 @@ async function postNotification(log, action) {
     const data = await response.json();
     console.log("Success:", data);
 
-    // Cập nhật UI
+    // Update UI
     updateLogStatus(log, action);
     console.log(`UI updated for log ${log.ID} with status: ${action}`);
     
