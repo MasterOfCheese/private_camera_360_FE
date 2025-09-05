@@ -501,7 +501,7 @@ const confirmCamera360WorkerEvent = async (workerEvent) => {
     // Gọi API để confirm worker event (cần tạo endpoint mới tương tự alarms)
     const response = await fetchWrapper.patch(`${window.appConfig.apiUrl}/v1/cameras/worker-events/${workerEvent.id}/confirm`, {
       employee_confirm_id: authStore.user?.id || 'unknown', // Lấy từ auth store
-      client_ip: null // Backend sẽ tự lấy IP
+      client_ip: clientId // Backend sẽ tự lấy IP
     });
 
     if (response) {
@@ -901,25 +901,41 @@ const acceptCamera360WorkerEvent = async (workerEvent) => {
   }
 
   try {
-    const response = await fetchWrapper.patch(`${window.appConfig.apiUrl}/v1/cameras/worker-events/${workerEvent.id}/accept`, {
-      employee_confirm_id: authStore.user?.id || 'unknown',
-      client_ip: null
+    const url = `${window.appConfig.apiUrl}/v1/cameras/worker-events/${workerEvent.id}/accept`;
+    
+    // Payload đơn giản giống hệt Smart Gate
+    const payload = {
+      ID: workerEvent.id,
+      action: "OK",
+      status: "Pending"
+    };
+
+    const response = await fetch(url, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
     });
 
-    if (response) {
-      // Cập nhật trạng thái local
-      workerEvent.status = 1;
-      // selectedCamera360Alarm.value = null;
-      
-      // Tải lại danh sách sau khi cập nhật
-      await fetchCamera360WorkerEvents();
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Camera 360 accept error:", errorText);
+      throw new Error(`HTTP ${response.status}: ${errorText}`);
     }
+
+    const data = await response.json();
+    console.log("Camera 360 accept success:", data);
+
+    // Cập nhật UI
+    workerEvent.status = 1;
+    await fetchCamera360WorkerEvents();
+    
   } catch (error) {
     console.error("Error accepting Camera 360 worker event:", error);
-    alert("Failed to accept worker event. Please try again.");
+    alert(`Failed to accept worker event: ${error.message}`);
   }
 };
-
 
 const declineCamera360WorkerEvent = async (workerEvent) => {
   const confirmMessage = "Are you sure you want to decline this worker event?";
@@ -929,22 +945,87 @@ const declineCamera360WorkerEvent = async (workerEvent) => {
   }
 
   try {
-    const response = await fetchWrapper.patch(`${window.appConfig.apiUrl}/v1/cameras/worker-events/${workerEvent.id}/decline`, {
-      employee_confirm_id: authStore.user?.id || 'unknown',
-      client_ip: null
+    const url = `${window.appConfig.apiUrl}/v1/cameras/worker-events/${workerEvent.id}/decline`;
+    
+    // Payload đơn giản giống hệt Smart Gate
+    const payload = {
+      ID: workerEvent.id,
+      action: "NG",
+      status: "Pending"
+    };
+
+    const response = await fetch(url, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
     });
 
-    if (response) {
-      // Cập nhật trạng thái local
-      workerEvent.status = 2;
-      // selectedCamera360Alarm.value = null;
-      
-      // Tải lại danh sách sau khi cập nhật
-      await fetchCamera360WorkerEvents();
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Camera 360 decline error:", errorText);
+      throw new Error(`HTTP ${response.status}: ${errorText}`);
     }
+
+    const data = await response.json();
+    console.log("Camera 360 decline success:", data);
+
+    // Cập nhật UI
+    workerEvent.status = 2;
+    await fetchCamera360WorkerEvents();
+    
   } catch (error) {
     console.error("Error declining Camera 360 worker event:", error);
-    alert("Failed to decline worker event. Please try again.");
+    alert(`Failed to decline worker event: ${error.message}`);
+  }
+};
+
+// Function chung để xử lý cả accept và decline cho Camera 360
+const processCamera360Action = async (workerEvent, action, statusValue) => {
+  const confirmMessage = `Are you sure you want to ${action} this worker event?`;
+  
+  if (!confirm(confirmMessage)) {
+    return;
+  }
+
+  try {
+    const url = `${window.appConfig.apiUrl}/v1/cameras/worker-events/${workerEvent.id}/${action}`;
+    
+    // Payload đơn giản - chỉ gửi những gì backend thực sự cần
+    const payload = {
+      employee_confirm_id: "system", // Giá trị cố định, đơn giản
+      client_ip: null
+    };
+
+    console.log(`Camera 360 ${action} request:`, { url, payload });
+
+    const response = await fetch(url, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Camera 360 ${action} error:`, errorText);
+      throw new Error(`HTTP ${response.status}: ${errorText}`);
+    }
+
+    const data = await response.json();
+    console.log(`Camera 360 ${action} success:`, data);
+
+    // Cập nhật UI ngay lập tức
+    workerEvent.status = statusValue;
+    
+    // Refresh danh sách
+    await fetchCamera360WorkerEvents();
+    
+  } catch (error) {
+    console.error(`Error ${action}ing Camera 360 worker event:`, error);
+    alert(`Failed to ${action} worker event: ${error.message}`);
   }
 };
 

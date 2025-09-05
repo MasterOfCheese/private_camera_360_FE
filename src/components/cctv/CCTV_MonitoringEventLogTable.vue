@@ -632,28 +632,31 @@ async function postNotification(log, action) {
   let method_post = 'POST';
   let body_data;
 
-  // Ánh xạ trạng thái hiển thị với tên endpoint của backend
   const actionEndpoints = {
     'OK': 'accept',
     'NG': 'decline'
   };
 
-  // Kiểm tra nguồn dữ liệu để chọn URL và phương thức phù hợp
   if (log.source === 'worker_events') {
+    // CAMERA 360 - Payload giống hệt Smart Gate
     const endpointAction = actionEndpoints[action];
     if (!endpointAction) {
       console.error("Unknown action:", action);
       return;
     }
+    
     url_post = `${window.appConfig.apiUrl}/v1/cameras/worker-events/${log.originalID}/${endpointAction}`;
     method_post = 'PATCH';
     
+    // Payload hoàn toàn giống Smart Gate
     body_data = {
-      employee_confirm_id: "your_employee_id_here",
-      client_ip: null
+      ID: log.originalID,
+      action: action,
+      status: log.Status
     };
 
   } else if (log.source === 'notification_stats') {
+    // SMART GATE - Giữ nguyên
     url_post = `${log.baseUrl}/notification_action`;
     body_data = {
       ID: log.ID,
@@ -671,6 +674,8 @@ async function postNotification(log, action) {
   }
 
   try {
+    console.log("Request:", { url_post, method_post, body_data });
+
     const response = await fetch(url_post, {
       method: method_post,
       headers: {
@@ -679,47 +684,45 @@ async function postNotification(log, action) {
       body: JSON.stringify(body_data)
     });
 
-    const data = await response.json();
-    console.log("response ::: ", data);
-
-    if (response.ok) {
-      // ✅ CẬP NHẬT UI NGAY LẬP TỨC
-      
-      // 1. Cập nhật selectedLog (cho popup)
-      if (selectedLog.value && selectedLog.value.ID === log.ID) {
-        selectedLog.value.Status = action;
-      }
-      
-      // 2. Cập nhật trong allLogs
-      const logIndex = allLogs.value.findIndex(item => item.ID === log.ID && item.source === log.source);
-      if (logIndex !== -1) {
-        allLogs.value[logIndex].Status = action;
-      }
-      
-      // 3. Cập nhật trong filteredLogs
-      const filteredLogIndex = filteredLogs.value.findIndex(item => item.ID === log.ID && item.source === log.source);
-      if (filteredLogIndex !== -1) {
-        filteredLogs.value[filteredLogIndex].Status = action;
-      }
-      
-      // 4. Cập nhật DOM element trực tiếp (nếu cần thiết)
-      const statusElement = document.getElementById(`status-${log.ID}`);
-      if (statusElement) {
-        statusElement.textContent = action;
-      }
-      
-      console.log(`✅ UI updated immediately for log ${log.ID} with status: ${action}`);
-      
-      // Optional: Vẫn có thể refresh data để đồng bộ với server (chạy background)
-      // fetchLogs();
-      
-    } else {
-      console.error("Lỗi server ::: ", data.detail || data);
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Server error:", errorText);
+      throw new Error(`HTTP ${response.status}: ${errorText}`);
     }
+
+    const data = await response.json();
+    console.log("Success:", data);
+
+    // Cập nhật UI
+    updateLogStatus(log, action);
+    console.log(`UI updated for log ${log.ID} with status: ${action}`);
+    
   } catch (error) {
-    console.error("Lỗi ngoại lệ: ", error);
+    console.error("Error:", error);
+    alert(`Error: ${error.message}`);
   }
 }
+
+// Helper function updateLogStatus và accept/decline functions giữ nguyên
+const updateLogStatus = (log, action) => {
+  if (selectedLog.value && selectedLog.value.ID === log.ID) {
+    selectedLog.value.Status = action;
+  }
+  
+  const logIndex = allLogs.value.findIndex(item => 
+    item.ID === log.ID && item.source === log.source
+  );
+  if (logIndex !== -1) {
+    allLogs.value[logIndex].Status = action;
+  }
+  
+  const filteredLogIndex = filteredLogs.value.findIndex(item => 
+    item.ID === log.ID && item.source === log.source
+  );
+  if (filteredLogIndex !== -1) {
+    filteredLogs.value[filteredLogIndex].Status = action;
+  }
+};
 
 // màu cho từng mã lỗi
 const getErrorCodeClass = (code) => {
