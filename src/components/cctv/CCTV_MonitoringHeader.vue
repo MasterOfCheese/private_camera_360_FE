@@ -29,54 +29,13 @@
 
       
 
-      <button title="Notifications"
+      <!-- <button title="Notifications"
         class="relative text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-blue-500 rounded-full p-1 hover:bg-white/10 transition">
         <i class="pi pi-bell text-xl"></i>
         <span class="absolute top-0 right-0 block h-2 w-2 rounded-full ring-2 ring-gray-800 bg-red-500"></span>
-      </button>
+      </button> -->
       
-      <div class="flex items-center gap-2 cursor-pointer group border-l border-white/10 pl-5 cursor-pointer">
-
-        <div class="relative cursor-pointer">
-          <!-- Nút Avatar -->
-          <button @click="toggleMenu" ref="buttonRef"
-            class="w-9 h-9 bg-gradient-to-br from-blue-700 to-indigo-800 rounded-full flex items-center justify-center border-2 border-blue-600/50 cursor-pointer hover:border-blue-400 transition shadow-inner">
-            <i class="pi pi-user text-blue-100 text-sm"></i>
-          </button>
-
-          <!-- Dropdown menu -->
-          <OverlayPanel ref="op" :dismissable="true" style="min-width: 12rem">
-            <div class="px-4 py-3 text-sm text-gray-900 dark:text-white">
-              <!-- <div>{{ user.name }}</div> -->
-              <div class="font-medium truncate">{{
-                authStore.user ? authStore.user.user : 'Guest'
-              }}</div>
-              <div>-----------------------------------</div>
-            </div>
-            <ul class="py-2 text-sm text-gray-700 dark:text-gray-200">
-              <li v-for="item in menuItems" :key="item.label">
-                <a @click="item.command" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer">
-                  {{ item.label }}
-                </a>
-              </li>
-            </ul>
-            <div class="py-2 border-t border-gray-200 dark:border-gray-600">
-              <a @click="logout"
-                class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white cursor-pointer">
-                {{ $t("Logout") }}
-              </a>
-            </div>
-          </OverlayPanel>
-        </div>
-
-        <span 
-          class="text-gray-200 font-medium group-hover:text-white transition" 
-          @click="toggleMenu" 
-          ref="buttonRef"
-          style="user-select: none;">{{
-          authStore.user ? authStore.user.user : 'Guest'
-        }}</span>
-      </div>
+      
     </div>
   </header>
 </template>

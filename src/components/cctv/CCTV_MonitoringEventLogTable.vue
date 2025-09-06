@@ -316,6 +316,8 @@ import SortIcon from '@/components/icons/IconSort.vue'
 import Button from 'primevue/button';
 import { fetchWrapper } from '@/helper'
 
+const showMobileFilters = ref(false)
+
 // Pagination
 const currentPage = ref(1)
 const pageSize = ref(10)
@@ -674,7 +676,7 @@ async function postNotification(log, action) {
   }
 
   try {
-    console.log("Request:", { url_post, method_post, body_data });
+    // console.log("Request:", { url_post, method_post, body_data });
 
     const response = await fetch(url_post, {
       method: method_post,
@@ -691,11 +693,11 @@ async function postNotification(log, action) {
     }
 
     const data = await response.json();
-    console.log("Success:", data);
+    // console.log("Success:", data);
 
     // Update UI
     updateLogStatus(log, action);
-    console.log(`UI updated for log ${log.ID} with status: ${action}`);
+    // console.log(`UI updated for log ${log.ID} with status: ${action}`);
     
   } catch (error) {
     console.error("Error:", error);
