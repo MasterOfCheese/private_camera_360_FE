@@ -286,7 +286,15 @@
             <div v-if="selectedLog.videoPath && selectedLog.baseUrl" class="col-span-2">
               <strong>Video:</strong>
               <video controls class="mt-2 max-w-full h-auto">
-                <source :src="`${selectedLog.videoPath}`" type="video/mp4" />
+                <!-- Smart Gate: use baseUrl + videoPath -->
+                <source v-if="selectedSource === 'notification_stats'" 
+                        :src="`${selectedLog.baseUrl}/${selectedLog.videoPath}`" 
+                        type="video/mp4" />
+                
+                <!-- Camera 360: use videoPath directly -->
+                <source v-else-if="selectedSource === 'worker_events'" 
+                        :src="`${selectedLog.videoPath}`" 
+                        type="video/mp4" />
               </video>
             </div>
 
