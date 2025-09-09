@@ -39,7 +39,7 @@
             :key="camera.id"
             class="p-3 sm:p-4 hover:bg-blue-600/10 transition-colors duration-150 cursor-pointer group"
             @click="handleItemClick(camera)"
-            :title="`View details for ${camera.name}`"
+            :title="getCameraItemTitle(camera)"
           >
             <div class="flex items-center space-x-3 sm:space-x-4">
               <!-- Fixed Size Image/Placeholder Container -->
@@ -66,13 +66,31 @@
                   >
                     {{ camera.name }}
                   </p>
-                  <p
-                    class="text-xs text-blue-300 truncate text-right flex-shrink-0"
-                    :title="camera.location"
-                  >
-                    <i class="pi pi-map-marker text-xs mr-1 opacity-80"></i>
-                    {{ camera.location ?? 'N/A' }}
-                  </p>
+                  <div class="flex items-center text-xs text-blue-300 truncate text-right flex-shrink-0">
+                    <div class="flex items-center" :title="camera.location">
+                      <i class="pi pi-map-marker text-xs mr-1 opacity-80"></i>
+                      {{ camera.location ?? 'N/A' }}
+                    </div>
+                    <div class="ml-2">
+                      <i 
+                        :class="[
+                          'pi text-xs transform scale-75',
+                          getCameraStatus(camera) === 'active' 
+                            ? 'pi-circle-fill text-green-400 animate-pulse' 
+                            : getCameraStatus(camera) === 'inactive'
+                            ? 'pi-circle-fill text-red-500'
+                            : 'pi-minus-circle text-gray-500'
+                        ]"
+                        :title="
+                          getCameraStatus(camera) === 'active' 
+                            ? 'Camera is streaming' 
+                            : getCameraStatus(camera) === 'inactive'
+                            ? 'Camera offline'
+                            : 'No stream configured'
+                        "
+                      ></i>
+                    </div>
+                  </div>
                 </div>
 
                 <div class="flex items-center text-xs text-gray-400 space-x-3 mb-1.5">
@@ -139,8 +157,20 @@
 
 <script setup>
 import 'primeicons/primeicons.css'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 
-defineProps({
+// defineProps({
+//   cameras: {
+//     type: Array,
+//     default: () => [],
+//   },
+//   visible: {
+//     type: Boolean,
+//     default: false,
+//   },
+// })
+// Lấy props để sử dụng trong các function
+const props = defineProps({
   cameras: {
     type: Array,
     default: () => [],
@@ -149,6 +179,137 @@ defineProps({
     type: Boolean,
     default: false,
   },
+})
+
+// Frontend code để thay thế trong CCTV_CameraChosingDrawer.vue
+
+// 2. Thêm reactive data cho camera status và WebSocket
+const activeCameraStreams = ref(new Set())
+const isCheckingStatus = ref(false)
+const cameraStatusWs = ref(null)
+
+// 3. Computed để check camera status (giữ nguyên)
+const getCameraStatus = (camera) => {
+  if (!camera.webrtc_ip) return 'no-stream'
+  
+  const streamName = extractStreamName(camera.webrtc_ip)
+  if (!streamName) return 'no-stream'
+  
+  return activeCameraStreams.value.has(streamName) ? 'active' : 'inactive'
+}
+
+// 4. Helper function để extract stream name (giữ nguyên)
+const extractStreamName = (webrtcUrl) => {
+  if (!webrtcUrl) return null
+  try {
+    const url = new URL(webrtcUrl)
+    const pathSegments = url.pathname.split('/').filter(Boolean)
+    return pathSegments[pathSegments.length - 1] || null
+  } catch {
+    return null
+  }
+}
+
+// 5. WebSocket connection functions
+const connectCameraStatusWs = () => {
+  if (cameraStatusWs.value) return // Already connected
+  
+  // Determine WebSocket URL based on current API config
+  let wsUrl
+  const apiUrl = window.appConfig?.apiUrl
+  // console.log('API URL from config:', apiUrl)
+  
+  if (apiUrl) {
+    // Convert HTTP API URL to WebSocket URL
+    // Ensure we have /v1 prefix - if apiUrl doesn't end with /v1, add it
+    let baseWsUrl = apiUrl.replace(/^https?:/, 'ws:')
+    if (!baseWsUrl.endsWith('/v1')) {
+      baseWsUrl += '/v1'
+    }
+    wsUrl = baseWsUrl + '/sys/camera-status'
+  } else {
+    // Fallback to default
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+    wsUrl = `${protocol}//${window.location.hostname}:8005/v1/sys/camera-status`
+  }
+  
+  // console.log('Final WebSocket URL:', wsUrl)
+  
+  // console.log('Connecting to camera status WebSocket:', wsUrl)
+  
+  try {
+    isCheckingStatus.value = true
+    cameraStatusWs.value = new WebSocket(wsUrl)
+    
+    cameraStatusWs.value.onopen = () => {
+      // console.log('Camera status WebSocket connected')
+      isCheckingStatus.value = false
+    }
+    
+    cameraStatusWs.value.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data)
+        // console.log('Received camera status:', data)
+        if (data.active_streams && Array.isArray(data.active_streams)) {
+          activeCameraStreams.value = new Set(data.active_streams)
+        }
+      } catch (error) {
+        console.warn('Error parsing camera status data:', error)
+      }
+    }
+    
+    cameraStatusWs.value.onerror = (error) => {
+      console.warn('Camera status WebSocket error:', error)
+      isCheckingStatus.value = false
+    }
+    
+    cameraStatusWs.value.onclose = (event) => {
+      // console.log('Camera status WebSocket disconnected:', event.code, event.reason)
+      cameraStatusWs.value = null
+      isCheckingStatus.value = false
+    }
+  } catch (error) {
+    console.warn('Error creating camera status WebSocket:', error)
+    isCheckingStatus.value = false
+  }
+}
+
+const disconnectCameraStatusWs = () => {
+  if (cameraStatusWs.value) {
+    cameraStatusWs.value.close()
+    cameraStatusWs.value = null
+  }
+  isCheckingStatus.value = false
+}
+
+// 6. Computed để tạo dynamic title cho camera item (giữ nguyên)
+const getCameraItemTitle = (camera) => {
+  const status = getCameraStatus(camera)
+  const baseName = camera.name || 'Camera'
+  
+  switch (status) {
+    case 'active':
+      return `${baseName} is ready for stream`
+    case 'inactive':
+      return `${baseName} is not ready for stream`
+    case 'no-stream':
+    default:
+      return `View details for ${baseName}`
+  }
+}
+
+// 7. Lifecycle hooks - Cleanup WebSocket
+onUnmounted(() => {
+  disconnectCameraStatusWs()
+})
+
+// 8. Watch for drawer visibility - Connect/disconnect WebSocket
+watch(() => props.visible, (newVisible) => {
+  if (newVisible) {
+    connectCameraStatusWs()
+  } else {
+    disconnectCameraStatusWs()
+  }
 })
 
 const emit = defineEmits(['close', 'select-camera'])
@@ -166,7 +327,7 @@ const onImageError = (event) => {
 }
 
 const handleItemClick = (camera) => {
-  console.log('Selected camera from list:', camera)
+  // console.log('Selected camera from list:', camera)
   emit('select-camera', camera)
 }
 </script>

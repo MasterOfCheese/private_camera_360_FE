@@ -265,7 +265,7 @@ const connectWebSocket = () => {
       cpuUsage.value = Math.min((data.cpu ?? cpuUsage.value) * 1.7, 100)
       ramUsage.value = data.ram ?? ramUsage.value
       diskUsage.value = data.disk ?? diskUsage.value
-      gpuUsage.value = Math.min((data.gpu ?? gpuUsage.value) * 1.7, 100)
+      gpuUsage.value = data.gpu ?? gpuUsage.value
       netUp.value = data.net_up ?? netUp.value
       netDown.value = data.net_down ?? netDown.value
     } catch (error) {
