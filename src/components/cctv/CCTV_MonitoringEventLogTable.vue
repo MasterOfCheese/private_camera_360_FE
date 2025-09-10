@@ -477,15 +477,52 @@ const fetchLogs = async () => {
     } else if (selectedSource.value === 'worker_events') {
       // console.log(`📡 #${fetchId} Fetching worker_events...`);
       
+      let allWorkerEvents = [];
+      let page = 1;
+      let totalFetched = 0;
       const workerEvents = await fetchWrapper.get(`${window.appConfig.apiUrl}/v1/cameras/worker-events`);
       
-      // Kiểm tra xem có phải fetch mới nhất không
+      while (true) {
+        const response = await fetchWrapper.get(
+          `${window.appConfig.apiUrl}/v1/cameras/worker-events?size=100&page=${page}`
+        );
+        
+        // Kiểm tra xem có phải fetch mới nhất không
+        if (fetchId !== currentFetchId) {
+          console.log(`🚫 #${fetchId} Aborted during pagination at page ${page}`);
+          return;
+        }
+        
+        const currentPageData = Array.isArray(response) ? response : (response.data || []);
+        
+        if (currentPageData.length === 0) {
+          console.log(`📄 Page ${page} is empty, stopping pagination`);
+          break;
+        }
+        
+        allWorkerEvents = [...allWorkerEvents, ...currentPageData];
+        totalFetched += currentPageData.length;
+        
+        // console.log(`📄 Page ${page}: Got ${currentPageData.length} items. Total: ${totalFetched}`);
+        
+        // Nếu page hiện tại < 100 items, đây là page cuối
+        if (currentPageData.length < 100) {
+          console.log(`📄 Page ${page} has less than 100 items, this is the last page`);
+          break;
+        }
+        
+        page++;
+      }
+      
+      // console.log(`✅ Total worker_events fetched: ${allWorkerEvents.length}`);
+      
+      // Kiểm tra lần cuối trước khi process
       if (fetchId !== currentFetchId) {
-        // console.log(`🚫 #${fetchId} Aborted - newer fetch in progress`);
+        console.log(`🚫 #${fetchId} Aborted before processing`);
         return;
       }
       
-      const processedWorkerEvents = Array.isArray(workerEvents) ? workerEvents : (workerEvents.data || []);
+      const processedWorkerEvents = allWorkerEvents;
       combinedResults = processedWorkerEvents.map(item => {
         let statusText = '';
         switch (item.status) {
