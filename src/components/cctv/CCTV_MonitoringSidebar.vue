@@ -1,38 +1,44 @@
 <template>
   <aside
   class="w-56 bg-gray-800/40 backdrop-blur-xl border-r border-white/10 flex flex-col text-gray-300 flex-shrink-0 shadow-lg z-10">
-  <div class="p-4 border-b border-white/10 bg-white/5">
-    <h3 class="text-xs font-semibold uppercase text-blue-300 mb-3 tracking-wider">{{ $t('Status') }}</h3>
-    <div class="space-y-2 text-sm">
-      <div class="flex justify-between items-center">
-        <span>{{ $t('Visitors') }}</span>
-        <span class="font-semibold px-2 py-0.5 bg-blue-600/30 rounded text-sm text-white">{{ visitors
-        }}</span>
-      </div>
-      <div class="flex justify-between items-center">
-        <span>{{ $t('Alarms') }}</span>
-        <span class="font-semibold px-2 py-0.5 bg-red-600/30 rounded text-sm text-white">{{ alarms
-        }}</span>
-      </div>
-      <div class="flex justify-between items-center">
-        <span>{{ $t('Violations') }}</span>
-        <span class="font-semibold px-2 py-0.5 bg-yellow-600/30 rounded text-sm text-white">{{ violations
-        }} %</span>
+    <div class="p-4 px-2 border-b border-white/10 bg-white/5">
+      <h3 class="text-sm font-semibold uppercase text-blue-300 mb-2 tracking-wider">
+        {{ $t('Status') }}
+      </h3>
+      <div class="space-y-1 text-sm">
+        <div class="flex justify-between items-center">
+          <span>{{ $t('Visitors') }}</span>
+          <span class="font-semibold px-1 py-0.5 bg-blue-600/30 rounded text-sm text-white">
+            {{ visitors }}
+          </span>
+        </div>
+        <div class="flex justify-between items-center">
+          <span>{{ $t('Alarms') }}</span>
+          <span class="font-semibold px-1 py-0.5 bg-red-600/30 rounded text-sm text-white">
+            {{ alarms }}
+          </span>
+        </div>
+        <div class="flex justify-between items-center">
+          <span>{{ $t('Violations') }}</span>
+          <span class="font-semibold px-1 py-0.5 bg-yellow-600/30 rounded text-sm text-white">
+            {{ violations }} %
+          </span>
+        </div>
       </div>
     </div>
-  </div>
+
 
   <SystemResource />
   
   <nav
-    class="py-3 space-y-1">
+    class="py-2 space-y-0">
     <RouterLink to="/" :class="[
-      'flex items-center px-4 py-2 text-sm transition-all delay-150 duration-300',
+      'flex items-center px-2 py-2 text-sm transition-all delay-150 duration-300',
       route.path === '/'
         ? 'font-medium bg-gradient-to-r from-blue-700/50 to-transparent text-white border-l-4 border-blue-400'
         : 'text-gray-300 rounded-md hover:bg-white/10 hover:text-white group transition-colors duration-150',
     ]">
-      <i class="pi pi-video mr-3" :class="route.path === '/'
+      <i class="pi pi-video mr-2" :class="route.path === '/'
         ? 'text-base'
         : 'text-gray-400 group-hover:text-blue-300 transition-colors duration-150 text-base'
         "></i>
@@ -40,12 +46,12 @@
     </RouterLink>
 
     <RouterLink to="/notifications" :class="[
-      'transition-all duration-300 flex items-center px-4 py-2 text-sm',
+      'transition-all duration-300 flex items-center px-2 py-2 text-sm',
       route.path === '/notifications'
         ? 'font-medium bg-gradient-to-r from-blue-700/50 to-transparent text-white border-l-4 border-blue-400'
         : 'text-gray-300 rounded-md hover:bg-white/10 hover:text-white group transition-colors duration-150',
     ]">
-      <i class="pi pi-bell mr-3" :class="route.path === '/notifications'
+      <i class="pi pi-bell mr-2" :class="route.path === '/notifications'
         ? 'text-base'
         : 'text-gray-400 group-hover:text-blue-300 transition-colors duration-150 text-base'
         "></i>
@@ -53,12 +59,25 @@
       <span class="ml-auto text-xs font-medium bg-red-600 text-red-100 px-1.5 py-0.5 rounded-full">{{ totalAlertsCount }}</span>
     </RouterLink>
 
-    <div class="px-4 py-2 border-t border-white/10 mt-2">
-      <div class="flex bg-gray-700/50 rounded-lg p-1">
+    <RouterLink to="/compass" :class="[
+        'flex items-center px-2 py-1 text-sm transition-all delay-150 duration-300',
+        route.path === '/compass'
+          ? 'font-medium bg-gradient-to-r from-blue-700/50 to-transparent text-white border-l-4 border-blue-400'
+          : 'text-gray-300 rounded-md hover:bg-white/10 hover:text-white group transition-colors duration-150',
+      ]">
+        <i class="pi pi-compass mr-2" :class="route.path === '/compass'
+          ? 'text-base'
+          : 'text-gray-400 group-hover:text-blue-300 transition-colors duration-150 text-base'
+          "></i>
+        <span>{{ $t("Compass") }}</span>
+    </RouterLink>
+
+    <div class="px-3 py-1.5 border-t border-white/10 mt-1.5">
+      <div class="flex bg-gray-700/50 rounded-md p-0.5">
         <button
           @click="activeTab = 'smartgate'"
           :class="[
-            'flex-1 text-xs px-2 py-1.5 rounded-md transition-all duration-200 cursor-pointer',
+            'flex-1 text-[11px] px-1.5 py-1 rounded cursor-pointer transition-colors duration-200',
             activeTab === 'smartgate'
               ? 'bg-blue-600 text-white font-medium'
               : 'text-gray-400 hover:text-gray-200'
@@ -68,7 +87,7 @@
         <button
           @click="activeTab = 'camera360'"
           :class="[
-            'flex-1 text-xs px-2 py-1.5 rounded-md transition-all duration-200 cursor-pointer',
+            'flex-1 text-[11px] px-1.5 py-1 rounded cursor-pointer transition-colors duration-200',
             activeTab === 'camera360'
               ? 'bg-blue-600 text-white font-medium'
               : 'text-gray-400 hover:text-gray-200'
@@ -76,48 +95,55 @@
           Camera 360
         </button>
       </div>
-    </div>
+</div>
+
   </nav>
 
   <div
     class="flex-1 flex flex-col overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-blue-800/40 scrollbar-track-transparent">
     <div v-if="activeTab === 'smartgate'">
-      <div v-for="(alert, index) in displayedSmartGateAlerts" :key="'sg-' + index"
-        :class="`bg-red-900 border-t border-gray-700 p-3 cursor-pointer ${alert.active ? 'bg-opacity-80' : 'bg-opacity-50'} transform transition duration-300 hover:scale-105 hover:shadow-xl hover:bg-red-700`"
-        @click="viewDetails(alert)">
-        <div class="font-semibold">{{ alert.title }}</div>
-        <div class="text-sm flex items-center drop-shadow"> 
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-gray-300" viewBox="0 0 20 20" fill="currentColor">
+      <div 
+        v-for="(alert, index) in displayedSmartGateAlerts" 
+        :key="'sg-' + index"
+        :class="[
+          'bg-red-900 border-t border-gray-700 p-2 py-1.5 rounded-md cursor-pointer transition duration-200',
+          'hover:scale-[1.02] hover:shadow-md hover:bg-red-700/80',
+          alert.active ? 'bg-opacity-80' : 'bg-opacity-50'
+        ]"
+        @click="viewDetails(alert)"
+      >
+        <div class="font-semibold text-sm mb-1">{{ alert.title }}</div>
+
+        <div class="text-xs flex items-center text-gray-200">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" viewBox="0 0 20 20" fill="currentColor">
             <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
             <path d="M14 6a2 2 0 012-2h2a2 2 0 012 2v8a2 2 0 01-2 2h-2a2 2 0 01-2-2V6z" />
           </svg>
           {{ alert.name_camera }}
         </div>
 
-        <div class="flex items-center">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-gray-300" viewBox="0 0 20 20" fill="currentColor">
+        <div class="flex items-center text-xs text-gray-200">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" viewBox="0 0 20 20" fill="currentColor">
             <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
           </svg>
-          <span class="text-sm drop-shadow">{{ alert.name_user ? alert.name_user : 'Test' }}</span>
+          <span>{{ alert.name_user || 'Test' }}</span>
         </div>
 
-        <div class="flex items-center">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-gray-300" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd"
-              d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
-              clip-rule="evenodd" />
+        <div class="flex items-center text-xs text-gray-200">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
           </svg>
-          <span class="text-sm drop-shadow">{{ alert.location }}</span>
+          <span>{{ alert.location }}</span>
         </div>
-        <div class="flex items-center mt-1">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-gray-300" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd"
-              d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
-              clip-rule="evenodd" />
+
+        <div class="flex items-center text-xs text-gray-200 mt-0.5">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
           </svg>
-          <span class="text-sm drop-shadow">{{ alert.time }}</span>
+          <span>{{ alert.time }}</span>
         </div>
       </div>
+
 
       <div v-if="displayedSmartGateAlerts.length === 0" class="p-6 text-center text-gray-400">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-3 text-gray-500" fill="none"
@@ -175,7 +201,7 @@
 
   <div class="pt-1 pb-2 border-t border-white/10">
     <RouterLink to="/settings" :class="[
-      'flex items-center px-4 py-2 text-sm transition-all duration-300',
+      'flex items-center px-2 py-1.5 text-sm transition-all duration-300',
       route.path === '/settings'
         ? 'font-medium bg-gradient-to-r from-blue-700/50 to-transparent text-white border-l-4 border-blue-400'
         : 'text-gray-300 rounded-md hover:bg-white/10 hover:text-white group transition-colors duration-150',
@@ -187,7 +213,7 @@
       <span>{{ $t("Settings") }}</span>
     </RouterLink>
 
-    <a class="flex items-center px-4 py-2 text-sm text-gray-300 rounded-md hover:bg-white/10 hover:text-white group transition-colors duration-150 cursor-pointer"
+    <a class="flex items-center px-2 py-1.5 text-sm text-gray-300 rounded-md hover:bg-white/10 hover:text-white group transition-colors duration-150 cursor-pointer"
       @click="logout">
       <i class="pi pi-sign-out mr-3 text-gray-400 group-hover:text-blue-300 transition-colors duration-150 text-base"></i>
       <span>{{ $t("Logout") }}</span>
