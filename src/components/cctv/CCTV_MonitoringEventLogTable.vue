@@ -416,7 +416,6 @@ let currentFetchId = 0;
 const fetchLogs = async () => {
   // Tạo ID duy nhất cho lần fetch này
   const fetchId = ++currentFetchId;
-  // console.log(`🔄 fetchLogs #${fetchId} called for source: ${selectedSource.value}`);
   
   isLoading.value = true;
   allLogs.value = [];
@@ -475,7 +474,6 @@ const fetchLogs = async () => {
       combinedResults = allNotificationResults.flat();
 
     } else if (selectedSource.value === 'worker_events') {
-      // console.log(`📡 #${fetchId} Fetching worker_events...`);
       
       let allWorkerEvents = [];
       let page = 1;
@@ -502,10 +500,7 @@ const fetchLogs = async () => {
         
         allWorkerEvents = [...allWorkerEvents, ...currentPageData];
         totalFetched += currentPageData.length;
-        
-        // console.log(`📄 Page ${page}: Got ${currentPageData.length} items. Total: ${totalFetched}`);
-        
-        // Nếu page hiện tại < 100 items, đây là page cuối
+
         if (currentPageData.length < 100) {
           console.log(`📄 Page ${page} has less than 100 items, this is the last page`);
           break;
@@ -513,9 +508,6 @@ const fetchLogs = async () => {
         
         page++;
       }
-      
-      // console.log(`✅ Total worker_events fetched: ${allWorkerEvents.length}`);
-      
       // Kiểm tra lần cuối trước khi process
       if (fetchId !== currentFetchId) {
         console.log(`🚫 #${fetchId} Aborted before processing`);
@@ -551,14 +543,10 @@ const fetchLogs = async () => {
 
     // Kiểm tra lần cuối trước khi set results
     if (fetchId !== currentFetchId) {
-      // console.log(`🚫 #${fetchId} Aborted before setting results`);
       return;
     }
 
     allLogs.value = combinedResults.sort((a, b) => new Date(b.datetime) - new Date(a.datetime));
-
-    // console.log(`✅ #${fetchId} Successfully fetched from ${selectedSource.value}: ${allLogs.value.length} logs`);
-
     applyFilters();
   } catch (error) {
     console.error(`❌ #${fetchId} Error in fetchLogs:`, error);
@@ -797,27 +785,9 @@ function decline(log) {
 
 // Giả sử bạn có 1 danh sách logs lấy từ API
 const logs = ref([
-  // Example:
-  // { ID: 1, Status: 'Pending', ... }
 ]);
 
-// const decline = (log) => {
-//   // Implement the decline logic here
-//   log.Status = 'NG'
-// }
-
-// Lifecycle hooks
-// onMounted(() => {
-//   // Lấy giá trị đã lưu trong localStorage và cập nhật selectedSource
-//   const savedSource = localStorage.getItem('selectedSource');
-//   if (savedSource) {
-//     selectedSource.value = savedSource;
-//   }
-// })
-
 watch(selectedSource, (newValue, oldValue) => {
-  // console.log(`🔄 Watch triggered: ${oldValue} -> ${newValue}`);
-  // localStorage.setItem('selectedSource', newValue);
   fetchLogs();
 }, { immediate: true });
 
