@@ -51,11 +51,11 @@
           ? 'font-medium bg-gradient-to-r from-blue-700/50 to-transparent text-white border-l-4 border-blue-400'
           : 'text-gray-300 rounded-md hover:bg-white/10 hover:text-white group transition-colors duration-150',
       ]">
-        <i class="pi pi-compass mr-2" :class="route.path === '/Virtual Tour'
+        <i class="pi pi-compass mr-2" :class="route.path === '/tour'
           ? 'text-base'
           : 'text-gray-400 group-hover:text-blue-300 transition-colors duration-150 text-base'
           "></i>
-        <span>{{ $t("Virtual Tour") }}</span>
+        <span>{{ $t("Virtual_Tour") }}</span>
     </RouterLink>
 
     <RouterLink to="/notifications" :class="[
@@ -72,12 +72,12 @@
       <span class="ml-auto text-xs font-medium bg-red-600 text-red-100 px-1.5 py-0.5 rounded-full">{{ totalAlertsCount }}</span>
     </RouterLink>
 
-    <div class="px-3 py-1.5 border-t border-white/10 mt-1.5">
+    <div class="px-2 pt-2 border-t border-white/10 mt-1.5">
       <div class="flex bg-gray-700/50 rounded-md p-0.5">
         <button
           @click="activeTab = 'smartgate'"
           :class="[
-            'flex-1 text-[11px] px-1.5 py-1 rounded cursor-pointer transition-colors duration-200',
+            'flex-1 text-[11px] p-2 rounded cursor-pointer transition-colors duration-200',
             activeTab === 'smartgate'
               ? 'bg-blue-600 text-white font-medium'
               : 'text-gray-400 hover:text-gray-200'
@@ -112,7 +112,7 @@
         ]"
         @click="viewDetails(alert)"
       >
-        <div class="font-semibold text-sm mb-1">{{ alert.title }}</div>
+        <div class="font-semibold">{{ alert.title }}</div>
 
         <div class="text-xs flex items-center text-gray-200">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" viewBox="0 0 20 20" fill="currentColor">
@@ -220,7 +220,7 @@
     </a>
   </div>
 
-  <div class="p-3 border-t border-white/10 text-xs text-center text-gray-500">
+  <div class="p-2 border-t border-white/10 text-xs text-center text-gray-500">
     <div class="flex items-center justify-center space-x-2">
       <div>
         <div>POWERED BY</div>
@@ -904,7 +904,6 @@ const displayedPages = computed(() => {
   return pages
 })
 
-// Thêm đoạn code này vào trong phần <script setup> của bạn
 const camera360ErrorImageUrl = computed(() => {
   if (selectedCamera360Alarm.value && selectedCamera360Alarm.value.img_error && typeof window !== 'undefined' && window.appConfig) {
     return `${window.appConfig.apiUrl}/${selectedCamera360Alarm.value.img_error}`;

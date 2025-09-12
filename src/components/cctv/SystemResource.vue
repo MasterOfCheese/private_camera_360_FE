@@ -1,7 +1,7 @@
 <template>
   <div class="p-2 text-sm border-b border-white/10 flex-shrink-0">
     <div class="flex justify-between items-center mb-2">
-      <h3 class="text-[10px] font-semibold uppercase text-blue-300 tracking-wide">
+      <h3 class="text-sm font-semibold uppercase text-blue-300 mb-2 tracking-wider">
         Resources
       </h3>
       <!-- Carousel Dots -->
