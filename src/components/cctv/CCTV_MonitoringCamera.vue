@@ -712,7 +712,37 @@ const confirmAlarm = async () => {
     const selectedAlarmIds = Array.from(selectedAlarms.value);
     const employeeId = confirmCode.value;
     
-    // Gọi API confirm
+    // 🔒 BACKUP DATA trước khi xóa (để rollback nếu cần)
+    const backupAlarms = alarmList.value.filter(alarm => 
+      selectedAlarmIds.includes(alarm.id)
+    );
+    
+    // // ⏱️ TIMEOUT ĐỂ GIỐNG THẬT HƠN
+    // await new Promise(resolve => setTimeout(resolve, 350));
+    
+    // ✅ CẬP NHẬT UI SAU TIMEOUT
+    const confirmedIds = new Set(selectedAlarmIds);
+    alarmList.value = alarmList.value.filter(alarm => !confirmedIds.has(alarm.id));
+    
+    // Clear form
+    selectedAlarms.value.clear();
+    confirmCode.value = '';
+    
+    // Hide popup if no more alarms
+    if (alarmList.value.length === 0) {
+      stopAlarmAudio();
+      alarmPopupVisible.value = false;
+      userHasHiddenPopup.value = false;
+    }
+    
+    // 🚫 TẠM DỪNG fetchAlarms() để tránh race condition
+    const originalInterval = alarmInterval;
+    if (alarmInterval) {
+      clearInterval(alarmInterval);
+      alarmInterval = null;
+    }
+    
+    // 🌐 API CALLS với better error handling
     const confirmPromises = selectedAlarmIds.map(alarmId => {
       return fetchWrapper.patch(
         `${window.appConfig.apiUrl}/v1/cameras/alarms/${alarmId}/confirm`, 
@@ -720,24 +750,53 @@ const confirmAlarm = async () => {
           employee_confirm_id: employeeId,
           client_ip: 'Browser-Client'
         }
-      );
+      ).catch(err => {
+        console.error(`Failed to confirm alarm ${alarmId}:`, err);
+        return { error: true, alarmId }; // Return error info thay vì null
+      });
     });
     
-    await Promise.all(confirmPromises);
-    console.log(`Confirmed ${selectedAlarmIds.length} alarms`);
-    
-    // Clear form
-    selectedAlarms.value.clear();
-    confirmCode.value = '';
-    
-    // Fetch lại để cập nhật từ server
-    await fetchAlarms();
+    Promise.all(confirmPromises).then(responses => {
+      const failedAlarms = responses.filter(r => r && r.error);
+      const successCount = responses.length - failedAlarms.length;
+      
+      console.log(`Successfully confirmed ${successCount}/${selectedAlarmIds.length} alarms`);
+      
+      // 🔄 ROLLBACK failed alarms nếu cần
+      if (failedAlarms.length > 0) {
+        const failedIds = failedAlarms.map(r => r.alarmId);
+        const alarmsToRestore = backupAlarms.filter(alarm => 
+          failedIds.includes(alarm.id)
+        );
+        
+        if (alarmsToRestore.length > 0) {
+          alarmList.value = [...alarmList.value, ...alarmsToRestore];
+          console.warn(`Restored ${alarmsToRestore.length} failed confirmations`);
+          
+          // Show popup lại nếu có alarm restore
+          if (!alarmPopupVisible.value && alarmList.value.length > 0) {
+            alarmPopupVisible.value = true;
+            userHasHiddenPopup.value = false;
+          }
+        }
+      }
+      
+      // 🔄 RESTART interval sau delay
+      setTimeout(() => {
+        if (!alarmInterval) {
+          startAlarmSimulation();
+        }
+      }, 2000);
+    });
     
   } catch (err) {
     console.error('Error confirming alarms:', err);
     alert('Không thể xác nhận cảnh báo. Vui lòng thử lại.');
   } finally {
-    isConfirming.value = false;
+    // 🔓 DELAY reset isConfirming để prevent spam
+    setTimeout(() => {
+      isConfirming.value = false;
+    }, 1000);
   }
 };
 
