@@ -28,9 +28,9 @@ const router = createRouter({
           component: () => import('@/components/cctv/CCTV_MonitoringEventLogTable.vue'),
         },
         {
-          path: '/compass',
-          name: 'compass',
-          component: () => import('@/components/cctv/CCTV_Compass.vue'),
+          path: '/tour',
+          name: 'tour',
+          component: () => import('@/components/cctv/CCTV_Tour.vue'),
         },
         {
           path: '/analytics',

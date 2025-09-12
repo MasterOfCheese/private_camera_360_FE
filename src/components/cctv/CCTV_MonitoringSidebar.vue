@@ -45,6 +45,19 @@
       <span>{{ $t("LIVE_View") }}</span>
     </RouterLink>
 
+    <RouterLink to="/tour" :class="[
+        'transition-all duration-300 flex items-center px-2 py-2 text-sm',
+        route.path === '/tour'
+          ? 'font-medium bg-gradient-to-r from-blue-700/50 to-transparent text-white border-l-4 border-blue-400'
+          : 'text-gray-300 rounded-md hover:bg-white/10 hover:text-white group transition-colors duration-150',
+      ]">
+        <i class="pi pi-compass mr-2" :class="route.path === '/Virtual Tour'
+          ? 'text-base'
+          : 'text-gray-400 group-hover:text-blue-300 transition-colors duration-150 text-base'
+          "></i>
+        <span>{{ $t("Virtual Tour") }}</span>
+    </RouterLink>
+
     <RouterLink to="/notifications" :class="[
       'transition-all duration-300 flex items-center px-2 py-2 text-sm',
       route.path === '/notifications'
@@ -57,19 +70,6 @@
         "></i>
       <span>{{ $t("Notifications") }}</span>
       <span class="ml-auto text-xs font-medium bg-red-600 text-red-100 px-1.5 py-0.5 rounded-full">{{ totalAlertsCount }}</span>
-    </RouterLink>
-
-    <RouterLink to="/compass" :class="[
-        'transition-all duration-300 flex items-center px-2 py-2 text-sm',
-        route.path === '/compass'
-          ? 'font-medium bg-gradient-to-r from-blue-700/50 to-transparent text-white border-l-4 border-blue-400'
-          : 'text-gray-300 rounded-md hover:bg-white/10 hover:text-white group transition-colors duration-150',
-      ]">
-        <i class="pi pi-compass mr-2" :class="route.path === '/compass'
-          ? 'text-base'
-          : 'text-gray-400 group-hover:text-blue-300 transition-colors duration-150 text-base'
-          "></i>
-        <span>{{ $t("Compass") }}</span>
     </RouterLink>
 
     <div class="px-3 py-1.5 border-t border-white/10 mt-1.5">
