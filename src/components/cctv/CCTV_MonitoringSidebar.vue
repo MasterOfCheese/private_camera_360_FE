@@ -106,7 +106,7 @@
         v-for="(alert, index) in displayedSmartGateAlerts" 
         :key="'sg-' + index"
         :class="[
-          'bg-red-900 border-t border-gray-700 p-2 py-1.5 rounded-md cursor-pointer transition duration-200',
+          'bg-red-900 border-t border-gray-700 p-3 rounded-md cursor-pointer transition duration-200',
           'hover:scale-[1.02] hover:shadow-md hover:bg-red-700/80',
           alert.active ? 'bg-opacity-80' : 'bg-opacity-50'
         ]"
@@ -114,7 +114,7 @@
       >
         <div class="font-semibold">{{ alert.title }}</div>
 
-        <div class="text-xs flex items-center text-gray-200">
+        <div class="text-sm flex items-center text-gray-200">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" viewBox="0 0 20 20" fill="currentColor">
             <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
             <path d="M14 6a2 2 0 012-2h2a2 2 0 012 2v8a2 2 0 01-2 2h-2a2 2 0 01-2-2V6z" />
@@ -122,21 +122,21 @@
           {{ alert.name_camera }}
         </div>
 
-        <div class="flex items-center text-xs text-gray-200">
+        <div class="flex items-center text-sm text-gray-200">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" viewBox="0 0 20 20" fill="currentColor">
             <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
           </svg>
           <span>{{ alert.name_user || 'Test' }}</span>
         </div>
 
-        <div class="flex items-center text-xs text-gray-200">
+        <div class="flex items-center text-sm text-gray-200">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" viewBox="0 0 20 20" fill="currentColor">
             <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
           </svg>
           <span>{{ alert.location }}</span>
         </div>
 
-        <div class="flex items-center text-xs text-gray-200 mt-0.5">
+        <div class="flex items-center text-sm text-gray-200 mt-0.5">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" viewBox="0 0 20 20" fill="currentColor">
             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
           </svg>

@@ -27,7 +27,7 @@
 
 
     <!-- Carousel Container with overflow hidden for smooth transition -->
-    <div class="relative h-[60px] overflow-hidden">
+    <div class="relative h-[75px] overflow-hidden">
       <!-- Page 1: CPU, RAM, Disk -->
       <transition
         enter-active-class="transition-transform duration-500 ease-out"
@@ -42,7 +42,7 @@
           <div class="flex items-center justify-between">
             <div class="flex items-center text-gray-300 w-[54px] flex-shrink-0">
               <i class="pi pi-desktop mr-1.5 text-blue-400 text-sm"></i>
-              <span class="text-[11px]">CPU</span>
+              <span class="text-[13px]">CPU</span>
             </div>
             <div class="flex-grow mx-1.5 bg-gray-700 rounded-full h-1 overflow-hidden">
               <div
@@ -52,7 +52,7 @@
               ></div>
             </div>
             <span
-              class="text-[11px] font-medium w-7 text-right tabular-nums transition-colors duration-300 ease-out"
+              class="text-[13px] font-medium w-7 text-right tabular-nums transition-colors duration-300 ease-out"
               :class="cpuUsageTextColorClass"
             >
               {{ cpuUsageText }}
@@ -62,7 +62,7 @@
           <div class="flex items-center justify-between">
             <div class="flex items-center text-gray-300 w-[54px] flex-shrink-0">
               <RamStickIcon class="mr-1.5 text-blue-400 text-sm w-[14px] h-[14px]" />
-              <span class="text-[11px]">RAM</span>
+              <span class="text-[13px]">RAM</span>
             </div>
             <div class="flex-grow mx-1.5 bg-gray-700 rounded-full h-1 overflow-hidden">
               <div
@@ -72,7 +72,7 @@
               ></div>
             </div>
             <span
-              class="text-[11px] font-medium w-7 text-right tabular-nums transition-colors duration-300 ease-out"
+              class="text-[13px] font-medium w-7 text-right tabular-nums transition-colors duration-300 ease-out"
               :class="ramUsageTextColorClass"
             >
               {{ ramUsageText }}
@@ -82,7 +82,7 @@
           <div class="flex items-center justify-between">
             <div class="flex items-center text-gray-300 w-[54px] flex-shrink-0">
               <i class="pi pi-database mr-1.5 text-blue-400 text-sm"></i>
-              <span class="text-[11px]">Disk</span>
+              <span class="text-[13px]">Disk</span>
             </div>
             <div class="flex-grow mx-1.5 bg-gray-700 rounded-full h-1 overflow-hidden">
               <div
@@ -92,7 +92,7 @@
               ></div>
             </div>
             <span
-              class="text-[11px] font-medium w-7 text-right tabular-nums transition-colors duration-300 ease-out"
+              class="text-[13px] font-medium w-7 text-right tabular-nums transition-colors duration-300 ease-out"
               :class="diskUsageTextColorClass"
             >
               {{ diskUsageText }}
@@ -115,7 +115,7 @@
           <div class="flex items-center justify-between">
             <div class="flex items-center text-gray-300 w-[54px] flex-shrink-0">
               <i class="pi pi-microchip-ai mr-1.5 text-blue-400 text-sm"></i>
-              <span class="text-[11px]">GPU</span>
+              <span class="text-[13px]">GPU</span>
             </div>
             <div class="flex-grow mx-1.5 bg-gray-700 rounded-full h-1 overflow-hidden">
               <div
@@ -125,7 +125,7 @@
               ></div>
             </div>
             <span
-              class="text-[11px] font-medium w-7 text-right tabular-nums transition-colors duration-300 ease-out"
+              class="text-[13px] font-medium w-7 text-right tabular-nums transition-colors duration-300 ease-out"
               :class="gpuUsageTextColorClass"
             >
               {{ gpuUsageText }}
@@ -135,10 +135,10 @@
           <div class="flex items-center justify-between">
             <div class="flex items-center text-gray-300 w-[54px] flex-shrink-0">
               <i class="pi pi-upload mr-1.5 text-blue-400 text-sm"></i>
-              <span class="text-[11px]">Up</span>
+              <span class="text-[13px]">Up</span>
             </div>
             <div class="flex-grow mx-1.5"></div>
-            <span class="text-[11px] font-medium w-auto text-right tabular-nums text-gray-300 pr-0.5">
+            <span class="text-[13px] font-medium w-auto text-right tabular-nums text-gray-300 pr-0.5">
               {{ netUpText }}
             </span>
           </div>
@@ -146,17 +146,16 @@
           <div class="flex items-center justify-between">
             <div class="flex items-center text-gray-300 w-[54px] flex-shrink-0">
               <i class="pi pi-download mr-1.5 text-blue-400 text-sm"></i>
-              <span class="text-[11px]">Down</span>
+              <span class="text-[13px]">Down</span>
             </div>
             <div class="flex-grow mx-1.5"></div>
-            <span class="text-[11px] font-medium w-auto text-right tabular-nums text-gray-300 pr-0.5">
+            <span class="text-[13px] font-medium w-auto text-right tabular-nums text-gray-300 pr-0.5">
               {{ netDownText }}
             </span>
           </div>
         </div>
       </transition>
     </div>
-
   </div>
 </template>
 
