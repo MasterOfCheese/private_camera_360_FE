@@ -26,14 +26,14 @@
             v-if="submitError"
             class="mb-4 p-3 bg-red-900/40 text-red-300 border border-red-700 rounded-md text-sm"
           >
-            {{ submitError }}
+            {{ getSubmitErrorMessage(submitError) }}
           </div>
 
           <div class="space-y-5 mb-6">
             <!-- Tag Name -->
             <div>
               <label for="tag_name" class="block text-sm font-medium text-blue-300 mb-1"
-                >Tag Name *</label
+                >{{ $t('tagManagement.tag_name') }} *</label
               >
               <input
                 type="text"
@@ -41,11 +41,11 @@
                 v-model.trim="formData.tag_name"
                 required
                 :disabled="isSubmitting"
-                placeholder="Enter the tag name"
+                :placeholder="$t('tagManagement.tag_name_placeholder')"
                 class="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition disabled:opacity-70"
               />
               <p v-if="!formData.tag_name && formAttempted" class="text-xs text-red-400 mt-1">
-                Tag name is required.
+                {{ $t('tagManagement.tag_name_required') }}
               </p>
             </div>
           </div>
@@ -58,7 +58,7 @@
               :disabled="isSubmitting"
               class="py-2 px-5 bg-gray-600 hover:bg-gray-500 text-gray-200 rounded-lg font-medium transition duration-200 disabled:opacity-60"
             >
-              Cancel
+              {{ $t('tagManagement.cancel') }}
             </button>
             <button
               type="submit"
@@ -76,7 +76,10 @@
 
 <script setup>
 import { ref, watch, computed } from 'vue'
-import { fetchWrapper } from '@/helper' // Adjust path if needed
+import { fetchWrapper } from '@/helper'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const props = defineProps({
   show: Boolean,
@@ -113,13 +116,37 @@ watch(
 )
 
 // --- Computed Properties ---
-const formTitle = computed(() => (props.mode === 'add' ? 'Add New Tag' : 'Edit Tag'))
+const formTitle = computed(() => 
+  props.mode === 'add' ? t('tagManagement.add_tag') : t('tagManagement.edit_tag')
+)
+
 const saveButtonText = computed(() => {
   if (isSubmitting.value) {
-    return props.mode === 'add' ? 'Adding...' : 'Saving...'
+    return props.mode === 'add' ? t('tagManagement.adding') : t('tagManagement.saving')
   }
-  return props.mode === 'add' ? 'Add Tag' : 'Save Changes'
+  return props.mode === 'add' ? t('tagManagement.add_tag') : t('tagManagement.save_changes')
 })
+
+// --- Error Message Handler ---
+const getSubmitErrorMessage = (err) => {
+  if (!err) return ''
+  
+  // Handle structured error from fetch-wrapper
+  if (typeof err === 'object' && err.code) {
+    switch (err.code) {
+      case 'FORBIDDEN':
+        return t('errors.forbidden')
+      case 'UNAUTHORIZED':
+        return t('errors.unauthorized')
+      case 'UNKNOWN':
+      default:
+        return err.message || t('errors.unknown')
+    }
+  }
+  
+  // Handle simple string errors (fallback)
+  return typeof err === 'string' ? err : (err.message || t('errors.unknown'))
+}
 
 // --- API URL Helper ---
 const getApiUrl = (tagId = null) => {
@@ -148,7 +175,7 @@ const submitForm = async () => {
 
   // Basic Validation
   if (!formData.value.tag_name) {
-    submitError.value = 'Tag name is required.'
+    submitError.value = t('tagManagement.tag_name_required')
     return
   }
 
@@ -182,7 +209,7 @@ const submitForm = async () => {
     // emit('close'); // Parent handles closing on save
   } catch (error) {
     console.error('Failed to submit tag form:', error)
-    submitError.value = error.message || 'An unexpected error occurred.'
+    submitError.value = error // Store the full error object
     emit('error', error)
   } finally {
     isSubmitting.value = false

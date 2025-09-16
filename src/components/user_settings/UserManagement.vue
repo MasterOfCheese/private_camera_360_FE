@@ -20,7 +20,7 @@
       v-if="error"
       class="mb-4 text-center p-4 bg-red-900/30 text-red-300 border border-red-700 rounded-lg"
     >
-      {{ $t('errors.load_users') }} {{ error }}
+      {{ getErrorMessage(error) }}
     </div>
     <template v-if="!isLoading && !error">
       <div class="mb-6 text-right">
@@ -100,7 +100,7 @@ import { ref, onMounted, defineAsyncComponent } from 'vue'
 import { fetchWrapper } from '@/helper' // Adjust path if needed
 // Assuming useAuthStore might be needed for permissions later, but not strictly for basic CRUD yet
 // import { useAuthStore } from '@/stores/authStore';
-import { useI18n } from 'vue-i18n'
+import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n()
 
@@ -126,6 +126,28 @@ const getApiUrl = () => {
   return `${url}/v1/users/`
 }
 
+// --- Error Message Handler ---
+const getErrorMessage = (err) => {
+  if (!err) return ''
+  
+  // Handle structured error from fetch-wrapper
+  if (err.code) {
+    switch (err.code) {
+      case 'FORBIDDEN':
+        return t('errors.forbidden')
+      case 'UNAUTHORIZED':
+        return t('errors.unauthorized')
+      case 'UNKNOWN':
+      default:
+        // For unknown errors, show the message with translated prefix
+        return `${t('errors.load_users')} ${err.message || t('errors.unknown')}`
+    }
+  }
+  
+  // Handle simple string errors (fallback)
+  return typeof err === 'string' ? err : (err.message || t('errors.unknown'))
+}
+
 // --- Fetch Users ---
 const fetchUsers = async () => {
   isLoading.value = true
@@ -141,7 +163,7 @@ const fetchUsers = async () => {
     users.value = response
   } catch (err) {
     console.error('Failed to fetch users:', err)
-    error.value = err.message || 'Could not load users.'
+    error.value = err // Store the full error object
     users.value = [] // Clear users on error
   } finally {
     isLoading.value = false
@@ -196,7 +218,7 @@ const handleDeleteUser = async (userId) => {
     // users.value = users.value.filter(u => u.id !== userId); // Alternative: local filter
   } catch (err) {
     console.error(`Failed to delete user ${userId}:`, err)
-    error.value = err.message || `Could not delete user ${userId}.`
+    error.value = err // Store the full error object
   } finally {
     isDeleting.value = null // Clear loading state
   }

@@ -23,6 +23,7 @@ function request(method) {
     return fetch(url, requestOptions).then(handleResponse)
   }
 }
+
 function login() {
   return (url, body) => {
     const formData = new FormData()
@@ -37,6 +38,7 @@ function login() {
     }).then(handleResponse)
   }
 }
+
 // helper functions
 
 function authHeader(url) {
@@ -57,20 +59,31 @@ function handleResponse(response) {
 
     if (!response.ok) {
       const { user } = useAuthStore()
-
-      // Trường hợp 403 - Forbidden
       if (response.status === 403) {
-        return Promise.reject({ message: 'You don\'t have permission to access this resource.' })
+        return Promise.reject({ 
+          code: 'FORBIDDEN',
+          status: 403,
+          message: 'Forbidden'
+        })
       }
 
-      // Trường hợp 401 - Unauthorized
       if (response.status === 401 && user) {
         console.log('Auto logout')
         // logout()
-        return Promise.reject({ message: 'Your session has expired, please log in again.' })
+        return Promise.reject({ 
+          code: 'UNAUTHORIZED',
+          status: 401,
+          message: 'Unauthorized'
+        })
       }
+
+      // Try catch cac loi khac:)))
       const error = (data && data.message) || response.statusText
-      return Promise.reject({ message: error })
+      return Promise.reject({ 
+        code: 'UNKNOWN',
+        status: response.status,
+        message: error 
+      })
     }
 
     return data

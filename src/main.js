@@ -66,6 +66,7 @@ const i18n = createI18n({
       no_shirt: "No Shirt",
       errors: {
         load_users: "Error loading users: ",
+        load_tags: "Error loading tags: ",
         forbidden: "You do not have permission to access this content.",
         unauthorized: "Your session has expired, please log in again.",
         unknown: "An error occurred while loading data.",
@@ -80,7 +81,20 @@ const i18n = createI18n({
       },
       tagManagement: {
         title: "Tag Management",
-        description: "Functionality to add, edit, and delete tags will be implemented here."
+        description: "Functionality to add, edit, and delete tags will be implemented here.",
+        no_tags: "No tags found. Add a new one!",
+        add_tag: "Add New Tag",
+        edit_tag: "Edit Tag",
+        loading: "Loading tags...",
+        tag_name: "Tag Name",
+        tag_name_placeholder: "Enter the tag name",
+        tag_name_required: "Tag name is required.",
+        cancel: "Cancel",
+        save_changes: "Save Changes", 
+        adding: "Adding...",
+        saving: "Saving...",
+        confirm_delete: "Are you sure you want to delete tag",
+        cannot_undo: "This cannot be undone."
       }
     },
     vi: {
@@ -131,6 +145,7 @@ const i18n = createI18n({
         forbidden: "Bạn không có quyền thao tác vào nội dung này.",
         unauthorized: "Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại.",
         load_users: "Lỗi khi tải danh sách người dùng:",
+        load_tags: "Lỗi khi tải danh sách thẻ:",
         unknown: "Đã xảy ra lỗi khi tải dữ liệu.",
       },
       userManagement: {
@@ -139,8 +154,21 @@ const i18n = createI18n({
         no_users: "Không tìm thấy người dùng nào. Hãy thêm mới!"
       },
       tagManagement: {
-        title: "Quản lý thẻ",
-        description: "Chức năng thêm, sửa, xóa thẻ sẽ được triển khai tại đây."
+        ttitle: "Quản lý thẻ",
+        description: "Chức năng thêm, sửa, xóa thẻ sẽ được triển khai tại đây.",
+        no_tags: "Không tìm thấy thẻ nào. Hãy thêm mới!",
+        add_tag: "Thêm Thẻ Mới",
+        edit_tag: "Sửa Thẻ",
+        loading: "Đang tải danh sách thẻ...",
+        tag_name: "Tên Thẻ",
+        tag_name_placeholder: "Nhập tên thẻ",
+        tag_name_required: "Tên thẻ là bắt buộc.",
+        cancel: "Hủy",
+        save_changes: "Lưu Thay Đổi",
+        adding: "Đang thêm...",
+        saving: "Đang lưu...",
+        confirm_delete: "Bạn có chắc chắn muốn xóa thẻ",
+        cannot_undo: "Thao tác này không thể hoàn tác."
       }
     },
     zh: {
@@ -187,6 +215,13 @@ const i18n = createI18n({
       load_users: "加载用户时出错:",
       unknown: "加载数据时出错。",
     },
+    errors: {
+      forbidden: "您没有权限访问此内容。",
+      unauthorized: "您的会话已过期，请重新登录。",
+      load_users: "加载用户时出错:",
+      load_tags: "加载标签时出错:",
+      unknown: "加载数据时出错。",
+    },
     userManagement: {
       title: "用户管理",
       description: "这里将实现添加、编辑和删除用户的功能。",
@@ -194,7 +229,20 @@ const i18n = createI18n({
     },
     tagManagement: {
       title: "标签管理",
-      description: "这里将实现添加、编辑和删除标签的功能。"
+      description: "这里将实现添加、编辑和删除标签的功能。",
+      no_tags: "未找到标签，请新增！",
+      add_tag: "添加新标签",
+      edit_tag: "编辑标签", 
+      loading: "正在加载标签...",
+      tag_name: "标签名称",
+      tag_name_placeholder: "输入标签名称",
+      tag_name_required: "标签名称是必需的。",
+      cancel: "取消",
+      save_changes: "保存更改",
+      adding: "正在添加...",
+      saving: "正在保存...",
+      confirm_delete: "确定要删除标签",
+      cannot_undo: "此操作无法撤销。"
     }
     }
   }

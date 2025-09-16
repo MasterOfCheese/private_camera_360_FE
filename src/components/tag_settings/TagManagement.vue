@@ -6,17 +6,17 @@
         @click="openAddModal"
         class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105"
       >
-        Add New Tag
+        {{ $t('tagManagement.add_tag') }}
       </button>
     </div>
 
     <!-- Loading/Error State -->
-    <div v-if="isLoading" class="text-center py-10 text-gray-400">Loading tags...</div>
+    <div v-if="isLoading" class="text-center py-10 text-gray-400">{{ $t('tagManagement.loading') }}</div>
     <div
       v-if="error"
       class="mb-4 text-center p-4 bg-red-900/30 text-red-300 border border-red-700 rounded-lg"
     >
-      Error loading tags: {{ error }}
+      {{ getErrorMessage(error) }}
     </div>
 
     <!-- Tag Grid (Adjusted Columns) -->
@@ -43,7 +43,7 @@
           >
             <button
               @click="openEditModal(tag)"
-              title="Edit Tag"
+              :title="$t('Edit')"
               class="text-xs bg-yellow-600 hover:bg-yellow-500 text-white font-semibold p-1.5 rounded-md transition duration-200"
             >
               <svg
@@ -63,7 +63,7 @@
 
             <button
               @click="handleDeleteTag(tag.id)"
-              title="Delete Tag"
+              :title="$t('delete')"
               class="text-xs bg-red-600 hover:bg-red-500 text-white font-semibold p-1.5 rounded-md transition duration-200"
               :disabled="isDeleting === tag.id"
             >
@@ -111,7 +111,7 @@
         v-if="!tags || tags.length === 0"
         class="col-span-full text-center py-10 bg-white/5 backdrop-blur-md rounded-lg border border-white/10"
       >
-        <p class="text-gray-400">No tags found. Add a new one!</p>
+        <p class="text-gray-400">{{ $t('tagManagement.no_tags') }}</p>
       </div>
     </div>
 
@@ -128,9 +128,11 @@
 </template>
 
 <script setup>
-// Script content remains the same as previous correct version
 import { ref, onMounted, defineAsyncComponent } from 'vue'
 import { fetchWrapper } from '@/helper'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const TagForm = defineAsyncComponent(() => import('./TagForm.vue'))
 
@@ -153,6 +155,28 @@ const getApiUrl = () => {
   return `${url}/v1/tags/`
 }
 
+// --- Error Message Handler ---
+const getErrorMessage = (err) => {
+  if (!err) return ''
+  
+  // Handle structured error from fetch-wrapper
+  if (err.code) {
+    switch (err.code) {
+      case 'FORBIDDEN':
+        return t('errors.forbidden')
+      case 'UNAUTHORIZED':
+        return t('errors.unauthorized')
+      case 'UNKNOWN':
+      default:
+        // For unknown errors, show the message with translated prefix
+        return `${t('errors.load_tags')} ${err.message || t('errors.unknown')}`
+    }
+  }
+  
+  // Handle simple string errors (fallback)
+  return typeof err === 'string' ? err : (err.message || t('errors.unknown'))
+}
+
 const fetchTags = async () => {
   isLoading.value = true
   error.value = null
@@ -166,7 +190,7 @@ const fetchTags = async () => {
     tags.value = response
   } catch (err) {
     console.error('Failed to fetch tags:', err)
-    error.value = err.message || 'Could not load tags.'
+    error.value = err // Store the full error object
     tags.value = []
   } finally {
     isLoading.value = false
@@ -198,7 +222,7 @@ const handleSaveTag = async () => {
 
 const handleDeleteTag = async (tagId) => {
   const tagName = tags.value.find((t) => t.id === tagId)?.tag_name || tagId
-  if (!confirm(`Are you sure you want to delete tag "${tagName}"? This cannot be undone.`)) {
+  if (!confirm(`${t('tagManagement.confirm_delete')} "${tagName}"? ${t('tagManagement.cannot_undo')}`)) {
     return
   }
   const apiUrl = getApiUrl()
@@ -213,7 +237,7 @@ const handleDeleteTag = async (tagId) => {
     await fetchTags()
   } catch (err) {
     console.error(`Failed to delete tag ${tagId}:`, err)
-    error.value = err.message || `Could not delete tag ${tagId}.`
+    error.value = err // Store the full error object
   } finally {
     isDeleting.value = null
   }
