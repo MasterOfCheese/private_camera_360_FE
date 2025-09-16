@@ -4,11 +4,13 @@
       v-if="error"
       class="bg-white/5 backdrop-blur-md rounded-lg border border-white/10 p-6 text-center"
     >
-      <h2 class="text-2xl font-semibold mb-4 text-blue-300">Tag Management</h2>
-      <p class="text-gray-400">
-        Functionality to add, edit, and delete tags will be implemented here.
-      </p>
-      <!-- TODO: Add Tag list, add/edit/delete buttons, and potentially a modal -->
+    <h2 class="text-2xl font-semibold mb-4 text-blue-300">
+      {{ $t('userManagement.title') }}
+    </h2>
+    <p class="text-gray-400">
+      {{ $t('userManagement.description') }}
+    </p>
+      <!-- TODO: Add User list, add/edit/delete buttons, and potentially a modal -->
     </div>
     <!-- Add User Button -->
 
@@ -18,7 +20,7 @@
       v-if="error"
       class="mb-4 text-center p-4 bg-red-900/30 text-red-300 border border-red-700 rounded-lg"
     >
-      Error loading users: {{ error }}
+      {{ $t('errors.load_users') }} {{ error }}
     </div>
     <template v-if="!isLoading && !error">
       <div class="mb-6 text-right">
@@ -76,7 +78,7 @@
           v-if="!users || users.length === 0"
           class="col-span-full text-center py-10 bg-white/5 backdrop-blur-md rounded-lg border border-white/10"
         >
-          <p class="text-gray-400">No users found. Add a new one!</p>
+          <p class="text-gray-400">{{ $t('userManagement.no_users') }}</p>
         </div>
       </div>
     </template>
@@ -98,6 +100,9 @@ import { ref, onMounted, defineAsyncComponent } from 'vue'
 import { fetchWrapper } from '@/helper' // Adjust path if needed
 // Assuming useAuthStore might be needed for permissions later, but not strictly for basic CRUD yet
 // import { useAuthStore } from '@/stores/authStore';
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const UserForm = defineAsyncComponent(() => import('./UserForm.vue')) // Adjust path if needed
 

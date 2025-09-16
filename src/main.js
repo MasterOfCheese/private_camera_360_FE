@@ -64,6 +64,24 @@ const i18n = createI18n({
       chart: { alarms: 'Alarms', pending: 'Pending', ack: 'Acknowledged' },
       search: "Search",
       no_shirt: "No Shirt",
+      errors: {
+        load_users: "Error loading users: ",
+        forbidden: "You do not have permission to access this content.",
+        unauthorized: "Your session has expired, please log in again.",
+        unknown: "An error occurred while loading data.",
+      },
+      userManagement: {
+        title: "User Management",
+        description: "Functionality to add, edit, and delete users will be implemented here.",
+        no_users: "No users found",
+        add_user: "Add New User",
+        loading: "Loading users...",
+        config_access: "Config Access",
+      },
+      tagManagement: {
+        title: "Tag Management",
+        description: "Functionality to add, edit, and delete tags will be implemented here."
+      }
     },
     vi: {
       FAISmart_Security: "An ninh thông minh",
@@ -109,6 +127,21 @@ const i18n = createI18n({
       chart: { alarms: 'Lỗi', pending: 'Chờ xử lý', ack: 'Đã xác nhận' },
       search: "Tìm kiếm",
       no_shirt: "Không mặc áo tĩnh điện",
+      errors: {
+        forbidden: "Bạn không có quyền thao tác vào nội dung này.",
+        unauthorized: "Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại.",
+        load_users: "Lỗi khi tải danh sách người dùng:",
+        unknown: "Đã xảy ra lỗi khi tải dữ liệu.",
+      },
+      userManagement: {
+        title: "Quản lý người dùng",
+        description: "Chức năng thêm, sửa, xóa người dùng sẽ được triển khai tại đây.",
+        no_users: "Không tìm thấy người dùng nào. Hãy thêm mới!"
+      },
+      tagManagement: {
+        title: "Quản lý thẻ",
+        description: "Chức năng thêm, sửa, xóa thẻ sẽ được triển khai tại đây."
+      }
     },
     zh: {
       FAISmart_Security: "智能安防",
@@ -148,6 +181,21 @@ const i18n = createI18n({
       Month: "月",
       search: "搜索",
       no_shirt: "未穿戴静电衣",
+      errors: {
+      forbidden: "您没有权限访问此内容。",
+      unauthorized: "您的会话已过期，请重新登录。",
+      load_users: "加载用户时出错:",
+      unknown: "加载数据时出错。",
+    },
+    userManagement: {
+      title: "用户管理",
+      description: "这里将实现添加、编辑和删除用户的功能。",
+      no_users: "未找到用户，请新增！"
+    },
+    tagManagement: {
+      title: "标签管理",
+      description: "这里将实现添加、编辑和删除标签的功能。"
+    }
     }
   }
 });

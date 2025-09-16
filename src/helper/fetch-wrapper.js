@@ -1,4 +1,5 @@
 import { useAuthStore } from '@/stores'
+import { useI18n } from 'vue-i18n'
 
 export const fetchWrapper = {
   get: request('GET'),
@@ -55,14 +56,21 @@ function handleResponse(response) {
     const data = text && JSON.parse(text)
 
     if (!response.ok) {
-      const { user, logout } = useAuthStore()
-      if ([401, 403].includes(response.status) && user) {
-        // auto logout if 401 Unauthorized or 403 Forbidden response returned from api
-        logout()
+      const { user } = useAuthStore()
+
+      // Trường hợp 403 - Forbidden
+      if (response.status === 403) {
+        return Promise.reject({ message: 'You don\'t have permission to access this resource.' })
       }
 
+      // Trường hợp 401 - Unauthorized
+      if (response.status === 401 && user) {
+        console.log('Auto logout')
+        // logout()
+        return Promise.reject({ message: 'Your session has expired, please log in again.' })
+      }
       const error = (data && data.message) || response.statusText
-      return Promise.reject(error)
+      return Promise.reject({ message: error })
     }
 
     return data

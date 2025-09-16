@@ -201,7 +201,7 @@
 
   <div class="pt-1 pb-2 border-t border-white/10">
     <RouterLink to="/settings" :class="[
-      'flex items-center px-2 py-1.5 text-sm transition-all duration-300',
+      'flex items-center p-2 text-sm transition-all duration-300',
       route.path === '/settings'
         ? 'font-medium bg-gradient-to-r from-blue-700/50 to-transparent text-white border-l-4 border-blue-400'
         : 'text-gray-300 rounded-md hover:bg-white/10 hover:text-white group transition-colors duration-150',
@@ -213,7 +213,7 @@
       <span>{{ $t("Settings") }}</span>
     </RouterLink>
 
-    <a class="flex items-center px-2 py-1.5 text-sm text-gray-300 rounded-md hover:bg-white/10 hover:text-white group transition-colors duration-150 cursor-pointer"
+    <a class="flex items-center p-2 text-sm text-gray-300 rounded-md hover:bg-white/10 hover:text-white group transition-colors duration-150 cursor-pointer"
       @click="logout">
       <i class="pi pi-sign-out mr-3 text-gray-400 group-hover:text-blue-300 transition-colors duration-150 text-base"></i>
       <span>{{ $t("Logout") }}</span>
