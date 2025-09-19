@@ -55,10 +55,12 @@
             Your browser does not support the video tag.
         </video>
         
-        <!-- Grid container for multiple videos -->
+        <!-- Grid container for multiple videos or web pages -->
         <div v-if="isGridMode" class="grid-container">
             <div v-for="(url, index) in gridUrls" :key="index" class="grid-wrapper">
+                <!-- Video grid -->
                 <video 
+                    v-if="gridType === 'video'"
                     :class="`grid-video grid-video-${index}`"
                     controls
                     :src="url || ''"
@@ -67,6 +69,16 @@
                 >
                     Video not supported
                 </video>
+                
+                <!-- Web grid (iframe) -->
+                <iframe
+                    v-else
+                    :class="`grid-iframe grid-iframe-${index}`"
+                    :src="url || 'about:blank'"
+                    frameBorder="0"
+                    allowfullscreen
+                >
+                </iframe>
             </div>
         </div>
         
@@ -94,6 +106,7 @@ const rtsp_url = ref('')
 const currentVideoUrl = ref('')
 const isGridMode = ref(false)
 const gridUrls = ref([])
+const gridType = ref('video') // 'video' or 'web'
 
 // pano settings
 const isRtspMode = ref(false);
@@ -404,12 +417,21 @@ function showVideoScene(hotspot) {
   currentVideoUrl.value = '';
   isGridMode.value = false;
   gridUrls.value = [];
+  gridType.value = 'video';
 
-  if (hotspot && hotspot.action === "webgrid") {
-    // Grid mode with multiple videos
+  if (hotspot && hotspot.action === "grid") {
+    // Grid mode - check gridType to determine if it's web or video
     isGridMode.value = true;
     gridUrls.value = hotspot.urls || hotspot.gridUrls || Array(9).fill('');
-    console.log('Grid mode activated with URLs:', gridUrls.value);
+    gridType.value = hotspot.gridType === 'web' ? 'web' : 'video';
+    console.log(`Grid mode activated (${gridType.value}) with URLs:`, gridUrls.value);
+    
+  } else if (hotspot && hotspot.action === "webgrid") {
+    // Legacy webgrid support - always web iframes
+    isGridMode.value = true;
+    gridUrls.value = hotspot.urls || hotspot.gridUrls || Array(9).fill('');
+    gridType.value = 'web';
+    console.log('Web grid mode activated with URLs:', gridUrls.value);
     
   } else if (hotspot && hotspot.videoType === "rtsp" && (hotspot.rtspUrl && !/\.[^/]+$/.test(hotspot.rtspUrl))) {
     // RTSP mode
@@ -442,6 +464,7 @@ function closeVideo() {
   currentVideoUrl.value = '';
   isGridMode.value = false;
   gridUrls.value = [];
+  gridType.value = 'video';
 
   // Hide video scene with transition
   if (videoScene) videoScene.style.opacity = "0";
