@@ -37,13 +37,38 @@
             v-if="isRtspMode && currentRtspHotspot"
             :key="currentRtspHotspot.rtspUrl"
             :camera="{ id: 'rtsp', panorama: true }"
-            :url="currentRtspHotspot.rtspUrl"
+            :url="rtsp_url"
             class="w-full h-full object-cover absolute inset-0 transition-opacity duration-300"
             :pano=1
         />
         
-        <!-- Default iframe -->
-        <iframe v-else id="myIframe" class="video-iframe"></iframe>
+        <!-- Video element thay vì iframe -->
+        <video 
+            v-else-if="currentVideoUrl && !isGridMode"
+            id="videoPlayer" 
+            class="video-player"
+            controls
+            autoplay
+            :src="currentVideoUrl"
+            @error="handleVideoError"
+        >
+            Your browser does not support the video tag.
+        </video>
+        
+        <!-- Grid container for multiple videos -->
+        <div v-if="isGridMode" class="grid-container">
+            <div v-for="(url, index) in gridUrls" :key="index" class="grid-wrapper">
+                <video 
+                    :class="`grid-video grid-video-${index}`"
+                    controls
+                    :src="url || ''"
+                    @error="handleGridVideoError(index)"
+                    @loadstart="handleVideoLoadStart(index)"
+                >
+                    Video not supported
+                </video>
+            </div>
+        </div>
         
         <div id="videoBack" class="video-back" @click="closeVideo">← Back to Tour</div>
     </div>
@@ -63,6 +88,12 @@ let isTransitioning = false;
 let viewer = null;
 let scenesConfig = null;
 let firstLoad = false;
+const rtsp_url = ref('')
+
+// Video state
+const currentVideoUrl = ref('')
+const isGridMode = ref(false)
+const gridUrls = ref([])
 
 // pano settings
 const isRtspMode = ref(false);
@@ -77,10 +108,24 @@ function toggleDebug() {
   debugInfo.value = !debugInfo.value;
 }
 
+// Video error handlers
+function handleVideoError(event) {
+  console.error('Video error:', event.target.error);
+  console.error('Failed to load video:', currentVideoUrl.value);
+}
+
+function handleGridVideoError(index) {
+  console.error(`Grid video ${index} error:`, gridUrls.value[index]);
+}
+
+function handleVideoLoadStart(index) {
+  console.log(`Grid video ${index} started loading:`, gridUrls.value[index]);
+}
+
 // Helper function - replace with your actual helper if different
-// function getAssetUrl(path) {
-//   return `${window.appConfig?.apiUrl || ''}/static/virtual_tour/${path}`;
-// }
+function getAssetUrl(path) {
+  return `${window.appConfig?.apiUrl || ''}/static/virtual_tour/${path}`;
+}
 
 async function loadConfiguration() {
   showLoading.value = true;
@@ -139,8 +184,9 @@ function processHotspots() {
     if (scene.hotSpots) {
       scene.hotSpots.forEach((hotspot) => {
         if (hotspot.targetScene) {
+          // Fix: Truyền chính hotspot object thay vì 'this'
           hotspot.clickHandlerFunc = function () {
-            streetViewTransition(hotspot.targetScene, this);
+            streetViewTransition(hotspot.targetScene, hotspot);
           };
         } else if (hotspot.action === "video") {
           hotspot.clickHandlerFunc = function () {
@@ -306,9 +352,29 @@ function streetViewTransition(sceneId, hotspot) {
   const overlay = document.getElementById("transition-overlay");
   const loader = document.getElementById("loading-indicator");
 
-  if (overlay) overlay.classList.add("active");
-  if (loader) loader.classList.add("active");
+  if (hotspot) {
+    console.log('Hotspot coords:', hotspot.pitch, hotspot.yaw);
+    
+    // Bước 1: Xoay camera đến hotspot (hotspot vẫn ở vị trí cũ)
+    viewer.lookAt(hotspot.pitch, hotspot.yaw, viewer.getHfov(), 300);
+    
+    // Bước 2: Zoom vào hotspot (hotspot giờ di chuyển về giữa màn hình)
+    setTimeout(() => {
+      viewer.lookAt(hotspot.pitch, hotspot.yaw, 30, 500);
+    }, 300);
+    
+    // Bước 3: Hiện loading ở giữa ngay khi zoom xong
+    setTimeout(() => {
+      if (overlay) overlay.classList.add("active");
+      if (loader) loader.classList.add("active");
+    }, 800); // Sau khi zoom hoàn thành
+  } else {
+    // Không có hotspot thì hiện loading ngay
+    if (overlay) overlay.classList.add("active");
+    if (loader) loader.classList.add("active");
+  }
 
+  // Bước 4: Chuyển scene
   setTimeout(() => {
     const yaw = hotspot ? hotspot.yaw : viewer.getYaw();
     const pitch = hotspot ? hotspot.pitch : viewer.getPitch();
@@ -316,91 +382,78 @@ function streetViewTransition(sceneId, hotspot) {
     viewer.loadScene(sceneId, pitch, yaw, 100, {
       transitionDuration: 600,
     });
-  }, 1000);
+  }, 700);
 
+  // Bước 5: Kết thúc transition
   setTimeout(() => {
     if (overlay) overlay.classList.remove("active");
     if (loader) loader.classList.remove("active");
     updateSceneInfo(sceneId);
     isTransitioning = false;
-  }, 1200);
+  }, 800);
 }
 
 function showVideoScene(hotspot) {
   const videoScene = document.getElementById("videoScene");
-  const iframe = document.getElementById("myIframe");
+  
+  if (!videoScene) return;
 
-  if (!videoScene || !iframe) return;
-
+  // Reset states
   isRtspMode.value = false;
   currentRtspHotspot.value = null;
-  iframe.style.display = "none";
-  iframe.src = "";
-
-  const existingGrid = document.querySelector(".grid-container");
-  if (existingGrid) existingGrid.remove();
+  currentVideoUrl.value = '';
+  isGridMode.value = false;
+  gridUrls.value = [];
 
   if (hotspot && hotspot.action === "webgrid") {
-    const gridContainer = document.createElement("div");
-    gridContainer.className = "grid-container";
+    // Grid mode with multiple videos
+    isGridMode.value = true;
+    gridUrls.value = hotspot.urls || hotspot.gridUrls || Array(9).fill('');
+    console.log('Grid mode activated with URLs:', gridUrls.value);
+    
+  } else if (hotspot && hotspot.videoType === "rtsp" && (hotspot.rtspUrl && !/\.[^/]+$/.test(hotspot.rtspUrl))) {
+    // RTSP mode
+    console.log("RTSP hotspot:", hotspot);
+    rtsp_url.value = hotspot.rtspUrl + '/whep';
+    isRtspMode.value = true;
+    currentRtspHotspot.value = hotspot;
+    
+  } else {
+    // Regular video mode
+    const videoUrl = hotspot?.videoUrl || hotspot?.rtspUrl || "https://www.w3schools.com/html/mov_bbb.mp4";
+    currentVideoUrl.value = videoUrl;
+    console.log('Video mode activated with URL:', videoUrl);
+  }
 
-    const urls = hotspot.urls || hotspot.gridUrls || [];
-    for (let i = 0; i < 9; i++) {
-      const wrapper = document.createElement("div");
-      wrapper.className = "grid-wrapper";
-
-      const gridIframe = document.createElement("iframe");
-      gridIframe.className = "grid-iframe";
-      gridIframe.src = urls[i] || "about:blank";
-      gridIframe.frameBorder = '0';
-      gridIframe.allowFullscreen = true;
-      
-      wrapper.appendChild(gridIframe);
-      gridContainer.appendChild(wrapper);
-    }
-
-    videoScene.insertBefore(gridContainer, videoScene.querySelector("#videoBack"));
-  } else if (hotspot && hotspot.videoType === "rtsp" &&(hotspot.rtspUrl && !/\.[^/]+$/.test(hotspot.rtspUrl))) {
-    console.log("hotspot:",hotspot)
-
-    hotspot.rtspUrl += '/whep';
-
-  isRtspMode.value = true;
-  currentRtspHotspot.value = hotspot;
-} else {
-  // fallback video
-  iframe.src = hotspot?.rtspUrl || "https://www.w3schools.com/html/mov_bbb.mp4";
-  iframe.style.display = "block";
-}
-
-videoScene.style.display = "flex";
-setTimeout(() => {
-  videoScene.style.opacity = "1";
-}, 50);
+  // Show video scene
+  videoScene.style.display = "flex";
+  setTimeout(() => {
+    videoScene.style.opacity = "1";
+  }, 50);
 }
 
 function closeVideo() {
   const videoScene = document.getElementById("videoScene");
-  const iframe = document.getElementById("myIframe");
-  const gridContainer = document.querySelector(".grid-container");
+  const panorama = document.getElementById("panorama");
 
+  // Reset all video states
   isRtspMode.value = false;
   currentRtspHotspot.value = null;
+  currentVideoUrl.value = '';
+  isGridMode.value = false;
+  gridUrls.value = [];
 
+  // Hide video scene with transition
   if (videoScene) videoScene.style.opacity = "0";
-  if (iframe) {
-    iframe.src = "";
-    iframe.style.display = "block";
-  }
-  if (gridContainer) {
-    gridContainer.querySelectorAll("iframe").forEach(f => (f.src = "about:blank"));
-    gridContainer.remove();
-  }
+
   setTimeout(() => {
     if (videoScene) videoScene.style.display = "none";
+    if (panorama && viewer) {
+      // Restore panorama view
+      viewer.lookAt(viewer.getPitch(), viewer.getYaw(), viewer.getHfov(), 0);
+    }
   }, 300);
 }
-
 
 onMounted(async () => {
   console.log('Component mounted');
@@ -592,8 +645,7 @@ onMounted(async () => {
     border: 2px solid rgba(255, 255, 255, 0.2);
     font-weight: 600;
     font-size: 14px;
-    transition: all 0.3s 
-cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     backdrop-filter: blur(10px);
     box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
 }
@@ -604,17 +656,42 @@ cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 6px 20px rgba(33, 150, 243, 0.5);
 }
 
+.video-scene {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.video-player {
+  max-width: 90%;
+  max-height: 80%;
+  width: auto;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 4px 40px rgba(0, 0, 0, 0.5);
+}
+
 /* Grid styles */
 :deep(.grid-container) {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     grid-template-rows: repeat(3, 1fr);
-    /* gap: 10px; */
-    width: 77%;
-    height: calc(100% - 60px);
+    gap: 10px;
+    width: 86%;
+    height: 100%;
     /* background: #000; */
     margin: 0 auto;
-    transform: translateY(25px);
+    transform: translateY(0);
+    scale: 0.8;
 }
 
 :deep(.grid-wrapper) {
@@ -631,14 +708,6 @@ position: absolute;
 top: 0;
 left: 0;
 border: none;
-}
-.grid-container {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-    justify-items: center;
-    align-items: center;
-    width: 77%;
 }
 
 /* Global hotspot styles - these need to be global to work with Pannellum */
@@ -754,4 +823,6 @@ cubic-bezier(0.4, 0, 0.2, 1);
     backdrop-filter: blur(10px);
     box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
 }
+
+
 </style>

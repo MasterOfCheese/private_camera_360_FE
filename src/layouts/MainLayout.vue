@@ -44,7 +44,11 @@ onMounted(() => {
 .fade-leave-from {
   opacity: 1;
 }
-.flex-1 {
+/* .flex-1 {
   overflow: auto!important;
+} */
+
+.flex.flex-1 {
+    overflow: hidden;
 }
 </style>
