@@ -256,7 +256,7 @@ async function initializePanorama() {
     });
 
     viewer.on("load", () => {
-      console.log('Panorama loaded, firstLoad:', firstLoad);
+      // console.log('Panorama loaded, firstLoad:', firstLoad);
       if (firstLoad) return;
       setTimeout(() => {
         updateSceneInfo(scenesConfig.default.firstScene);
@@ -366,7 +366,7 @@ function streetViewTransition(sceneId, hotspot) {
   const loader = document.getElementById("loading-indicator");
 
   if (hotspot) {
-    console.log('Hotspot coords:', hotspot.pitch, hotspot.yaw);
+    // console.log('Hotspot coords:', hotspot.pitch, hotspot.yaw);
     
     // Bước 1: Xoay camera đến hotspot (hotspot vẫn ở vị trí cũ)
     viewer.lookAt(hotspot.pitch, hotspot.yaw, viewer.getHfov(), 300);
