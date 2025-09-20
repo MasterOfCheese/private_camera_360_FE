@@ -136,19 +136,19 @@ function handleVideoLoadStart(index) {
 }
 
 // Helper function - replace with your actual helper if different
-function getAssetUrl(path) {
-  return `${window.appConfig?.apiUrl || ''}/static/virtual_tour/${path}`;
-}
+// function getAssetUrl(path) {
+//   return `${window.appConfig?.apiUrl || ''}/static/virtual_tour/${path}`;
+// }
 
 async function loadConfiguration() {
   showLoading.value = true;
 
   try {
-    console.log('Starting to load configuration...');
-    console.log('API URL:', window.appConfig?.apiUrl || 'undefined');
+    // console.log('Starting to load configuration...');
+    // console.log('API URL:', window.appConfig?.apiUrl || 'undefined');
     
     const configUrl = `${window.appConfig?.apiUrl || ''}/static/virtual_tour/B08-3F.json`;
-    console.log('Config URL:', configUrl);
+    // console.log('Config URL:', configUrl);
     
     const response = await fetch(configUrl);
 
@@ -157,14 +157,14 @@ async function loadConfiguration() {
     }
 
     scenesConfig = await response.json();
-    console.log("Configuration loaded successfully:", scenesConfig);
+    // console.log("Configuration loaded successfully:", scenesConfig);
 
     // Process the panorama URLs to use full paths
     for (const sceneId in scenesConfig.scenes) {
       const scene = scenesConfig.scenes[sceneId];
       if (scene.panorama && !scene.panorama.startsWith('http')) {
         const oldPanorama = scene.panorama;
-        scene.panorama = getAssetUrl(scene.panorama);
+        // scene.panorama = getAssetUrl(scene.panorama);
         console.log(`Updated panorama URL for ${sceneId}: ${oldPanorama} -> ${scene.panorama}`);
       }
     }
@@ -177,7 +177,7 @@ async function loadConfiguration() {
     console.error("Error loading configuration:", error);
     showLoading.value = false;
     console.log('Falling back to default config...');
-    loadFallbackConfig();
+    // loadFallbackConfig();
   }
 }
 
@@ -231,7 +231,7 @@ async function initializePanorama() {
     scenes: scenesConfig.scenes,
   };
 
-  console.log('Initializing Pannellum with config:', config);
+  // console.log('Initializing Pannellum with config:', config);
 
   try {
     // Make sure the panorama element exists and is visible
@@ -241,14 +241,14 @@ async function initializePanorama() {
       return;
     }
 
-    console.log('Panorama element dimensions:', {
-      width: panoramaEl.offsetWidth,
-      height: panoramaEl.offsetHeight,
-      display: getComputedStyle(panoramaEl).display
-    });
+    // console.log('Panorama element dimensions:', {
+    //   width: panoramaEl.offsetWidth,
+    //   height: panoramaEl.offsetHeight,
+    //   display: getComputedStyle(panoramaEl).display
+    // });
 
     viewer = window.pannellum.viewer("panorama", config);
-    console.log('Pannellum viewer created:', viewer);
+    // console.log('Pannellum viewer created:', viewer);
     
     viewer.on("scenechange", (scene_id) => {
       console.log("Scene changed to:", scene_id);
@@ -269,76 +269,31 @@ async function initializePanorama() {
     });
 
     // Debug mouse events (optional)
-    viewer.on('mousedown', (event) => {
-      console.log("pitch:", viewer.getPitch());
-      console.log("yaw:", viewer.getYaw());
-      console.log("hfov:", viewer.getHfov());
+      viewer.on('mousedown', (event) => {
+      // Lấy tọa độ của điểm click
+      const canvas = document.querySelector('#panorama canvas');
+      if (canvas && event) {
+        const rect = canvas.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+        
+        // Chuyển đổi tọa độ pixel thành tọa độ panorama
+        const coords = viewer.mouseEventToCoords(event);
+        if (coords && coords.length >= 2) {
+          console.log("Clicked coordinates:");
+          console.log("  pitch:", coords[0]);
+          console.log("  yaw:", coords[1]);
+          console.log("Current camera position:");
+          console.log("  pitch:", viewer.getPitch());
+          console.log("  yaw:", viewer.getYaw());
+          console.log("  hfov:", viewer.getHfov());
+        }
+      }
     });
 
   } catch (error) {
     console.error('Error initializing panorama:', error);
   }
-}
-
-function loadFallbackConfig() {
-  scenesConfig = {
-    default: {
-      firstScene: "scene1",
-      autoLoad: true,
-      sceneFadeDuration: 600,
-      showZoomCtrl: false,
-      showFullscreenCtrl: false,
-      showControls: true,
-      mouseZoom: true,
-      hfov: 100,
-      minHfov: 60,
-      maxHfov: 120,
-    },
-    sceneInfo: {
-      scene1: "Scene 1 - Living Room",
-      scene2: "Scene 2 - Kitchen",
-    },
-    scenes: {
-      scene1: {
-        panorama: getAssetUrl("3f_template_img/vlcsnap-00001.jpg"),
-        hfov: 100,
-        pitch: 0,
-        yaw: 180,
-        hotSpots: [
-          {
-            pitch: 1.75,
-            yaw: 140,
-            cssClass: "link-hotspot",
-            targetScene: "scene2",
-          },
-          {
-            pitch: 0,
-            yaw: -40,
-            cssClass: "video-hotspot",
-            action: "video",
-            videoUrl: getAssetUrl("3f_template_img/video001.mp4"),
-          },
-        ],
-      },
-      scene2: {
-        panorama: getAssetUrl("3f_template_img/vlcsnap-00004.jpg"),
-        hfov: 110,
-        pitch: 0,
-        yaw: 180,
-        hotSpots: [
-          {
-            pitch: 0,
-            yaw: 140,
-            cssClass: "link-hotspot",
-            targetScene: "scene1",
-          },
-        ],
-      },
-    },
-  };
-
-  processHotspots();
-  initializePanorama();
 }
 
 function updateSceneInfo(sceneId) {
@@ -387,12 +342,16 @@ function streetViewTransition(sceneId, hotspot) {
     if (loader) loader.classList.add("active");
   }
 
-  // Bước 4: Chuyển scene
+  // Bước 4: Chuyển scene với góc từ targetYaw/targetPitch
   setTimeout(() => {
-    const yaw = hotspot ? hotspot.yaw : viewer.getYaw();
-    const pitch = hotspot ? hotspot.pitch : viewer.getPitch();
+    // Lấy góc đích từ hotspot hoặc fallback về config scene
+    const targetScene = scenesConfig.scenes[sceneId];
+    const targetYaw = hotspot?.targetYaw || targetScene?.yaw || viewer.getYaw();
+    const targetPitch = hotspot?.targetPitch || targetScene?.pitch || viewer.getPitch();
 
-    viewer.loadScene(sceneId, pitch, yaw, 100, {
+    console.log('Loading scene with angles:', { targetPitch, targetYaw });
+
+    viewer.loadScene(sceneId, targetPitch, targetYaw, 100, {
       transitionDuration: 600,
     });
   }, 700);
@@ -479,11 +438,11 @@ function closeVideo() {
 }
 
 onMounted(async () => {
-  console.log('Component mounted');
+  // console.log('Component mounted');
   
   // Wait for next tick to ensure DOM is ready
   await nextTick();
-  console.log('DOM ready');
+  // console.log('DOM ready');
   
   // Check if Pannellum is loaded
   let attempts = 0;
@@ -491,10 +450,10 @@ onMounted(async () => {
   
   const checkPannellum = () => {
     attempts++;
-    console.log(`Checking Pannellum... attempt ${attempts}`);
+    // console.log(`Checking Pannellum... attempt ${attempts}`);
     
     if (typeof window.pannellum !== 'undefined') {
-      console.log('Pannellum found!');
+      // console.log('Pannellum found!');
       pannellumLoaded.value = true;
       loadConfiguration();
     } else if (attempts < maxAttempts) {
@@ -743,22 +702,22 @@ border: none;
 }
 
 .link-hotspot {
-    width: 60px;
-    height: 60px;
+    width: 80px;
+    height: 80px;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(66, 165, 245, 0.8) 0%, rgba(33, 150, 243, 0.6) 70%, transparent 100%);
-    border: 3px solid rgba(255, 255, 255, 0.9);
+    /* background: radial-gradient(circle, rgba(152, 160, 167, 0.8) 0%, rgba(148, 155, 160, 0.6) 70%, transparent 100%); */
+    background: rgb(255 255 255 / 22%);
+    /* border: 3px solid rgba(255, 255, 255, 0.9); */
     cursor: pointer;
     box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
-    /* position: relative; */
-    /* overflow: hidden; */
+    position: absolute;
 }
 
 .link-hotspot:hover {
       transform: scale(1.3);
-      background: radial-gradient(circle, rgba(76, 175, 80, 0.9) 0%, rgba(56, 142, 60, 0.7) 70%, transparent 100%);
-      border-color: rgba(255, 255, 255, 1);
-      box-shadow: 0 6px 20px rgba(76, 175, 80, 0.6);
+      /* background: radial-gradient(circle, rgba(76, 175, 80, 0.9) 0%, rgba(56, 142, 60, 0.7) 70%, transparent 100%); */
+      /* border-color: rgba(255, 255, 255, 1); */
+      /* box-shadow: 0 6px 20px rgba(76, 175, 80, 0.6); */
     }
 
 .link-hotspot::before {
@@ -785,14 +744,15 @@ border: none;
       position: absolute;
       top: 50%;
       left: 50%;
-      transform: translate(-50%, -60%);
-      width: 0;
-      height: 0;
-      border-left: 10px solid transparent;
-      border-right: 10px solid transparent;
-      border-bottom: 16px solid white;
+      transform: translate(-50%, -50%);
+      width: 60px;
+      height:20px; /* thấp hơn để mũi tên bẹt */
+      background: white;
+      clip-path: polygon(50% 0, 0 100%, 20% 100%, 50% 40%, 80% 100%, 100% 100%);
       pointer-events: none;
     }
+
+
 
 .video-hotspot {
   width: 40px;
