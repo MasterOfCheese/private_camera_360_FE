@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Map Coordinate Mapper</title>
+    <style>
+        .map-container {
+            position: relative;
+            display: inline-block;
+        }
+        .map-img {
+            max-width: 100%;
+            height: auto;
+            cursor: crosshair;
+        }
+        .coordinate-info {
+            margin-top: 10px;
+            font-family: monospace;
+            background: #f0f0f0;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h2>Click vào map để lấy tọa độ % cho từng scene</h2>
+    <div class="map-container">
+        <img src="http://127.0.0.1:8005/static/virtual_tour/3f_template_img/map.png" 
+             class="map-img" 
+             id="mapImage"
+             onclick="getCoordinates(event)">
+    </div>
+    
+    <div class="coordinate-info" id="coordInfo">
+        Click vào map để hiển thị tọa độ
+    </div>
+    
+    <div id="sceneResults">
+        <h3>Kết quả tọa độ scenes:</h3>
+        <textarea id="resultsArea" rows="20" cols="60" placeholder="Copy các tọa độ vào đây..."></textarea>
+    </div>
+
+    <script>
+        function getCoordinates(event) {
+            const img = event.target;
+            const rect = img.getBoundingClientRect();
+            
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            
+            const xPercent = (x / rect.width) * 100;
+            const yPercent = (y / rect.height) * 100;
+            
+            const info = `Pixel: (${x.toFixed(0)}, ${y.toFixed(0)}) | Percent: (${xPercent.toFixed(1)}, ${yPercent.toFixed(1)})`;
+            document.getElementById('coordInfo').innerHTML = info;
+            
+            const sceneCoord = `'scene00X': { x: ${xPercent.toFixed(1)}, y: ${yPercent.toFixed(1)}, label: 'Scene Name' },`;
+            
+            const currentResults = document.getElementById('resultsArea').value;
+            document.getElementById('resultsArea').value = currentResults + '\n' + sceneCoord;
+            
+            console.log('Coordinates:', { x: xPercent.toFixed(1), y: yPercent.toFixed(1) });
+        }
+    </script>
+</body>
+</html>
