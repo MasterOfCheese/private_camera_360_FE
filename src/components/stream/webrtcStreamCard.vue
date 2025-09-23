@@ -2,25 +2,14 @@
   <div class="relative w-full h-full">
     <!-- Pannellum Container (used when pano === 1) -->
     <div ref="plmContainerRef" class="w-full h-full" :class="{ hidden: props.pano !== 1 }"></div>
-    <video
-      ref="videoRef"
-      autoplay
-      muted
-      playsinline
-      no-controls
-      crossorigin="anonymous"
-      class="object-fill"
-      loop
+    <video ref="videoRef" autoplay muted playsinline no-controls crossorigin="anonymous" class="object-fill" loop
       :class="{
         'w-full h-full': props.pano !== 1,
         'absolute -top-[9999px] -left-[9999px] w-px h-px opacity-0 pointer-events-none':
           props.pano === 1,
-      }"
-    ></video>
-    <div
-      v-if="status === 'Initializing...'"
-      class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-10"
-    >
+      }"></video>
+    <div v-if="status === 'Initializing...'"
+      class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-10">
       <div class="spinner"></div>
     </div>
   </div>
@@ -39,9 +28,10 @@ const props = defineProps({
   onError: Function,
   onTrack: Function,
   pano: { type: Number, default: 0 },
+  hotspots: { type: Array, default: [] },
 })
 
-const emit = defineEmits(['success'])
+const emit = defineEmits(['success', 'hotspotclicked'])
 
 const status = ref('Initializing...')
 const videoRef = ref(null)
@@ -107,6 +97,14 @@ const handleError = (err) => {
   }
 }
 
+const processHotspots=(hotSpots)=>{
+  hotSpots.forEach(hotspot => {
+    hotspot.clickHandlerFunc = function () {
+      emit('hotspotclicked', hotspot)
+    }
+  });
+}
+
 // --- Pannellum Initialization and Synchronization ---
 const initializePannellum = () => {
   // Ensure Pannellum library is loaded
@@ -130,6 +128,9 @@ const initializePannellum = () => {
   }
 
   console.log('Initializing Pannellum...')
+  if (props.hotspots?.length>0){
+    processHotspots(props.hotspots)
+  }
   try {
     pannellumViewer = pannellum.viewer(plmContainerRef.value, {
       type: 'equirectangular',
@@ -140,8 +141,10 @@ const initializePannellum = () => {
       // Start updates immediately IF the video is already playing
       // Otherwise, the play event will trigger it.
       dynamicUpdate: videoRef.value && !videoRef.value.paused,
+      hotSpots: props.hotspots,
     })
     pannellumViewer.on('mouseup', () => {
+      console.log('config: ', pannellumViewer.getConfig())
       console.log(
         'data: ',
         pannellumViewer.getPitch(),
@@ -379,6 +382,7 @@ defineExpose({
   0% {
     transform: rotate(0deg);
   }
+
   100% {
     transform: rotate(360deg);
   }
@@ -394,8 +398,10 @@ defineExpose({
   position: absolute;
   top: -9999px;
   left: -9999px;
-  width: 1px; /* Small size */
-  height: 1px; /* Small size */
+  width: 1px;
+  /* Small size */
+  height: 1px;
+  /* Small size */
   opacity: 0;
   pointer-events: none;
 }

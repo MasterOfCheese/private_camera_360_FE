@@ -47,6 +47,7 @@
         <div
           v-for="(scene, sceneId) in sceneMarkers"
           :key="sceneId"
+          v-show="shouldShowMarker(sceneId)"
           :class="[
             'scene-marker',
             { active: currentSceneId === sceneId },
@@ -186,8 +187,15 @@ const currentSceneId = ref('scene001')
 const visitedScenes = ref(['scene001'])
 const mapImageUrl = ref('')
 
+// Minimap configuration from JSON
+const minimapConfig = ref({
+  showAllMarkers: true,
+  showVisitedMarkers: true,
+  showActiveMarker: true,
+  showUnvisitedMarkers: true
+})
+
 // Scene coordinates trên map (% từ top-left)
-// BẠN CẦN ĐO ĐẠC VÀ ĐIỀU CHỈNH CÁC TỌA ĐỘ NÀY DỰA TRÊN MAP THỰC TẾ
 const sceneMarkers = ref({
   scene001: { x: 66.7, y: 25.4, label: 'Entrance' },
   scene002: { x: 63, y: 25.4, label: 'Walkway 1' },
@@ -211,6 +219,33 @@ const sceneMarkers = ref({
 const currentSceneMarker = computed(() => {
   return sceneMarkers.value[currentSceneId.value]
 })
+
+// Method to determine if a marker should be shown
+function shouldShowMarker(sceneId) {
+  const isActive = currentSceneId.value === sceneId
+  const isVisited = visitedScenes.value.includes(sceneId)
+  const isUnvisited = !isVisited && !isActive
+  
+  // If showAllMarkers is true, show all markers
+  if (minimapConfig.value.showAllMarkers) {
+    return true
+  }
+  
+  // Otherwise, check individual settings
+  if (isActive && minimapConfig.value.showActiveMarker) {
+    return true
+  }
+  
+  if (isVisited && minimapConfig.value.showVisitedMarkers) {
+    return true
+  }
+  
+  if (isUnvisited && minimapConfig.value.showUnvisitedMarkers) {
+    return true
+  }
+  
+  return false
+}
 
 function toggleDebug() {
   debugInfo.value = !debugInfo.value
@@ -251,7 +286,6 @@ function onMapClick(event) {
 function jumpToScene(sceneId) {
   if (viewer && scenesConfig?.scenes[sceneId]) {
     console.log('Jumping to scene from minimap:', sceneId)
-    // Log the x,y coordinates of the scene marker
     const marker = sceneMarkers.value[sceneId]
     console.log('Scene coordinates:', { x: marker.x, y: marker.y })
     streetViewTransition(sceneId)
@@ -297,6 +331,12 @@ async function loadConfiguration() {
 
     scenesConfig = await response.json()
     console.log('Configuration loaded successfully:', scenesConfig)
+
+    // Load minimap configuration from JSON
+    if (scenesConfig.minimap) {
+      minimapConfig.value = { ...minimapConfig.value, ...scenesConfig.minimap }
+      console.log('Minimap config loaded:', minimapConfig.value)
+    }
 
     // Process the panorama URLs to use full paths
     for (const sceneId in scenesConfig.scenes) {
