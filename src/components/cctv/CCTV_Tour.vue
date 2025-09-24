@@ -16,8 +16,7 @@
     <div class="minimap-toggle" @click="toggleMinimap">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
         <path
-          d="M20.5,3L20.34,3.03L15,5.1L9,3L3.36,4.9C3.15,4.97 3,5.15 3,5.38V20.5A0.5,0.5 0 0,0 3.5,21L3.66,20.97L9,18.9L15,21L20.64,19.1C20.85,19.03 21,18.85 21,18.62V3.5A0.5,0.5 0 0,0 20.5,3M10,5.47L14,6.87V18.53L10,17.13V5.47M5,6.46L8,5.45V17.15L5,18.31V6.46M16,18.55L19,17.54V5.84L16,6.87V18.55Z"
-        />
+          d="M20.5,3L20.34,3.03L15,5.1L9,3L3.36,4.9C3.15,4.97 3,5.15 3,5.38V20.5A0.5,0.5 0 0,0 3.5,21L3.66,20.97L9,18.9L15,21L20.64,19.1C20.85,19.03 21,18.85 21,18.62V3.5A0.5,0.5 0 0,0 20.5,3M10,5.47L14,6.87V18.53L10,17.13V5.47M5,6.46L8,5.45V17.15L5,18.31V6.46M16,18.55L19,17.54V5.84L16,6.87V18.55Z" />
       </svg>
       Map
     </div>
@@ -35,44 +34,26 @@
       </div>
 
       <div class="minimap-content" ref="minimapContainer">
-        <img
-          :src="mapImageUrl"
-          alt="Floor Plan"
-          class="minimap-image"
-          @load="onMapImageLoaded"
-          @click="onMapClick"
-        />
+        <img :src="mapImageUrl" alt="Floor Plan" class="minimap-image" @load="onMapImageLoaded" @click="onMapClick" />
 
         <!-- Scene Markers -->
-        <div
-          v-for="(scene, sceneId) in sceneMarkers"
-          :key="sceneId"
-          v-show="shouldShowMarker(sceneId)"
-          :class="[
-            'scene-marker',
-            { active: currentSceneId === sceneId },
-            { visited: visitedScenes.includes(sceneId) },
-          ]"
-          :style="{
+        <div v-for="(scene, sceneId) in sceneMarkers" :key="sceneId" v-show="shouldShowMarker(sceneId)" :class="[
+          'scene-marker',
+          { active: currentSceneId === sceneId },
+          { visited: visitedScenes.includes(sceneId) },
+        ]" :style="{
             left: scene.x + '%',
             top: scene.y + '%',
-          }"
-          @click="jumpToScene(sceneId)"
-          :title="getSceneTitle(sceneId)"
-        >
+          }" @click="jumpToScene(sceneId)" :title="getSceneTitle(sceneId)">
           <div class="marker-dot"></div>
           <div class="marker-label">{{ scene.label || sceneId }}</div>
         </div>
 
         <!-- Current Position Indicator -->
-        <div
-          v-if="currentSceneMarker"
-          class="current-position"
-          :style="{
-            left: currentSceneMarker.x + '%',
-            top: currentSceneMarker.y + '%',
-          }"
-        >
+        <div v-if="currentSceneMarker" class="current-position" :style="{
+          left: currentSceneMarker.x + '%',
+          top: currentSceneMarker.y + '%',
+        }">
           <div class="position-ring"></div>
         </div>
       </div>
@@ -99,51 +80,47 @@
     <!-- Video overlay -->
     <div id="videoScene" class="video-scene">
       <!-- WebRTC pano -->
-      <webrtcStreamCard
-        v-if="isRtspMode && currentRtspHotspot"
-        :key="currentRtspHotspot.rtspUrl"
-        :camera="{ id: 'rtsp', panorama: true }"
-        :url="rtsp_url"
+      <webrtcStreamCard v-if="isRtspMode && currentRtspHotspot" :key="currentRtspHotspot.rtspUrl"
+        :camera="{ id: 'rtsp', panorama: true }" :url="rtsp_url"
         class="w-full h-full object-cover absolute inset-0 transition-opacity duration-300"
-        :pano="1"
+        :pano=1
+        :hotspots="stream_hotspot"
+        @hotspotclicked="handleHotspotClickFromStream"
       />
 
       <!-- Video element thay vì iframe -->
-      <video
-        v-else-if="currentVideoUrl && !isGridMode"
-        id="videoPlayer"
-        class="video-player"
-        controls
-        autoplay
-        :src="currentVideoUrl"
-        @error="handleVideoError"
-      >
+      <video v-else-if="currentVideoUrl && !isGridMode" id="videoPlayer" class="video-player" controls autoplay
+        :src="currentVideoUrl" @error="handleVideoError">
         Your browser does not support the video tag.
       </video>
 
+      <!-- Thumbnail grid -->
+      <div v-if="isThumbnailMode" class="grid-container">
+        <div v-for="(thumbnail, index) in gridThumbnails" :key="index" class="grid-wrapper">
+          <img :src="thumbnail" alt="System Thumbnail" class="thumbnail-image" @click="showSingleIframe(index)" 
+              @error="handleThumbnailError(index)" />
+        </div>
+        <!-- Placeholder cho ô trống nếu gridThumbnails.length < 9 -->
+        <div v-for="n in (9 - gridThumbnails.length)" :key="'empty-' + n" class="grid-wrapper placeholder">
+          <div class="placeholder-text">No Thumbnail</div>
+        </div>
+      </div>
+
+      <!-- Single iframe mode -->
+      <iframe v-if="singleIframeUrl" class="single-iframe" :src="singleIframeUrl" frameBorder="0" allowfullscreen></iframe>
+      
       <!-- Grid container for multiple videos or web pages -->
       <div v-if="isGridMode" class="grid-container">
         <div v-for="(url, index) in gridUrls" :key="index" class="grid-wrapper">
           <!-- Video grid -->
-          <video
-            v-if="gridType === 'video'"
-            :class="`grid-video grid-video-${index}`"
-            controls
-            :src="url || ''"
-            @error="handleGridVideoError(index)"
-            @loadstart="handleVideoLoadStart(index)"
-          >
+          <video v-if="gridType === 'video'" :class="`grid-video grid-video-${index}`" controls :src="url || ''"
+            @error="handleGridVideoError(index)" @loadstart="handleVideoLoadStart(index)">
             Video not supported
           </video>
 
           <!-- Web grid (iframe) -->
-          <iframe
-            v-else
-            :class="`grid-iframe grid-iframe-${index}`"
-            :src="url || 'about:blank'"
-            frameBorder="0"
-            allowfullscreen
-          >
+          <iframe v-else :class="`grid-iframe grid-iframe-${index}`" :src="url || 'about:blank'" frameBorder="0"
+            allowfullscreen>
           </iframe>
         </div>
       </div>
@@ -164,12 +141,17 @@ let viewer = null
 let scenesConfig = null
 let firstLoad = false
 const rtsp_url = ref('')
+const stream_hotspot = ref([])
+const videoStack = ref([]);
 
 // Video state
 const currentVideoUrl = ref('')
 const isGridMode = ref(false)
 const gridUrls = ref([])
 const gridType = ref('video') // 'video' or 'web'
+const isThumbnailMode = ref(false) // New state for thumbnail grid
+const gridThumbnails = ref([]) // Store thumbnail URLs
+const singleIframeUrl = ref('') // Store single iframe URL for enlarged view
 
 // pano settings
 const isRtspMode = ref(false)
@@ -184,7 +166,7 @@ const showLoading = ref(false)
 const minimapVisible = ref(false)
 const minimapExpanded = ref(false)
 const currentSceneId = ref('scene001')
-const visitedScenes = ref(['scene001'])
+const visitedScenes = ref([])
 const mapImageUrl = ref('')
 
 // Minimap configuration from JSON
@@ -196,25 +178,7 @@ const minimapConfig = ref({
 })
 
 // Scene coordinates trên map (% từ top-left)
-const sceneMarkers = ref({
-  scene001: { x: 66.7, y: 25.4, label: 'Entrance' },
-  scene002: { x: 63, y: 25.4, label: 'Walkway 1' },
-  'scene003': { x: 63, y: 14, label: 'Walkway 2' },
-  'scene004': { x: 58.25, y: 14, label: 'Walkway 3' },
-  'scene005': { x: 53.5, y: 14, label: 'Walkway 4' },
-  'scene006': { x: 48.75, y: 14, label: 'Walkway 5' },
-  'scene007': { x: 44, y: 14, label: 'Walkway 6' },
-  'scene008': { x: 39.25, y: 14, label: 'Walkway 7' },
-  'scene009': { x: 34.5, y: 14, label: 'Walkway 8' },
-  'scene010': { x: 29.75, y: 14, label: 'Walkway 9' },
-  'scene011': { x: 25, y: 14, label: 'Walkway 10' },
-  'scene012': { x: 20.25, y: 14, label: 'Walkway 11' },
-  'scene013': { x: 15.5, y: 14, label: 'Walkway 12' },
-  'scene014': { x: 10.75, y: 14, label: 'Walkway 13' },
-  'scene015': { x: 6, y: 14, label: 'Walkway 14' },
-  'scene016': { x: 4, y: 6.5, label: 'WarRoom' },
-  'scene017': { x: 2, y: 14, label: 'Walkway 15' }
-});
+const sceneMarkers = ref({})
 
 const currentSceneMarker = computed(() => {
   return sceneMarkers.value[currentSceneId.value]
@@ -225,25 +189,25 @@ function shouldShowMarker(sceneId) {
   const isActive = currentSceneId.value === sceneId
   const isVisited = visitedScenes.value.includes(sceneId)
   const isUnvisited = !isVisited && !isActive
-  
+
   // If showAllMarkers is true, show all markers
   if (minimapConfig.value.showAllMarkers) {
     return true
   }
-  
+
   // Otherwise, check individual settings
   if (isActive && minimapConfig.value.showActiveMarker) {
     return true
   }
-  
+
   if (isVisited && minimapConfig.value.showVisitedMarkers) {
     return true
   }
-  
+
   if (isUnvisited && minimapConfig.value.showUnvisitedMarkers) {
     return true
   }
-  
+
   return false
 }
 
@@ -383,8 +347,24 @@ function processHotspots() {
           }
         } else if (hotspot.action === 'grid') {
           hotspot.clickHandlerFunc = function () {
-            showVideoScene({ ...hotspot, action: 'webgrid' })
+            showVideoScene({ ...hotspot, action: 'thumbnail' })
           }
+        }
+
+        // Xử lý hotspots bên trong stream hotspots
+        if (hotspot.hotSpots && Array.isArray(hotspot.hotSpots)) {
+          hotspot.hotSpots.forEach((streamHotspot) => {
+            if (streamHotspot.targetScene) {
+              streamHotspot.clickHandlerFunc = function () {
+                // Sẽ được gọi bởi handleHotspotClickFromStream
+                streetViewTransition(streamHotspot.targetScene, streamHotspot);
+              }
+            } else if (streamHotspot.action === 'video') {
+              streamHotspot.clickHandlerFunc = function () {
+                showVideoScene(streamHotspot);
+              }
+            }
+          })
         }
       })
     }
@@ -527,45 +507,98 @@ function streetViewTransition(sceneId, hotspot) {
 
 function showVideoScene(hotspot) {
   const videoScene = document.getElementById('videoScene')
-
   if (!videoScene) return
 
-  // Reset states
+  // Push current state if nested (giữ nguyên như cũ)
+  if (isRtspMode.value || currentVideoUrl.value || isGridMode.value || isThumbnailMode.value || singleIframeUrl.value) {
+    let currentState = {}
+    if (isRtspMode.value) {
+      currentState = { type: 'rtsp', data: { hotspot: currentRtspHotspot.value, stream_hotspot: stream_hotspot.value } }
+    } else if (currentVideoUrl.value) {
+      currentState = { type: 'video', data: { url: currentVideoUrl.value } }
+    } else if (isGridMode.value) {
+      currentState = { type: 'grid', data: { urls: gridUrls.value, gridType: gridType.value } }
+    } else if (isThumbnailMode.value) {
+      currentState = { type: 'thumbnail', data: { urls: gridUrls.value, thumbnails: gridThumbnails.value } }
+    } else if (singleIframeUrl.value) {
+      currentState = { type: 'singleIframe', data: { url: singleIframeUrl.value } }
+    }
+    videoStack.value.push(currentState)
+    console.log('Pushed to stack:', currentState)
+  }
+
+  // Reset states (giữ nguyên như cũ)
   isRtspMode.value = false
   currentRtspHotspot.value = null
   currentVideoUrl.value = ''
   isGridMode.value = false
   gridUrls.value = []
   gridType.value = 'video'
+  stream_hotspot.value = []
+  isThumbnailMode.value = false
+  gridThumbnails.value = []
+  singleIframeUrl.value = ''
 
-  if (hotspot && hotspot.action === 'grid') {
+  // Set new state based on hotspot
+  if (hotspot.action === 'thumbnail' || (hotspot.action === 'grid' && hotspot.gridType === 'web')) {
+    const urls = hotspot.urls || hotspot.gridUrls || []
+    const thumbnails = hotspot.thumbnailUrl && Array.isArray(hotspot.thumbnailUrl) ? hotspot.thumbnailUrl : []
+
+    if (urls.length === 1) {
+      // Trường hợp single item: chuyển thẳng sang single iframe
+      singleIframeUrl.value = urls[0] || ''
+      console.log('Single iframe mode activated with URL:', singleIframeUrl.value)
+    } else {
+      // Trường hợp nhiều item hoặc rỗng: dùng thumbnail mode
+      isThumbnailMode.value = true
+      gridUrls.value = urls
+      gridThumbnails.value = thumbnails.slice(0, 9) // Giới hạn 9, không fill
+      console.log('Thumbnail mode activated with URLs:', gridUrls.value, 'Thumbnails:', gridThumbnails.value)
+    }
+  } else if (hotspot.action === 'grid' && hotspot.gridType !== 'web') {
+    // Giữ nguyên cho grid video
     isGridMode.value = true
     gridUrls.value = hotspot.urls || hotspot.gridUrls || Array(9).fill('')
     gridType.value = hotspot.gridType === 'web' ? 'web' : 'video'
     console.log(`Grid mode activated (${gridType.value}) with URLs:`, gridUrls.value)
-  } else if (hotspot && hotspot.action === 'webgrid') {
-    isGridMode.value = true
-    gridUrls.value = hotspot.urls || hotspot.gridUrls || Array(9).fill('')
-    gridType.value = 'web'
-    console.log('Web grid mode activated with URLs:', gridUrls.value)
-  } else if (
-    hotspot &&
-    hotspot.videoType === 'rtsp' &&
-    hotspot.rtspUrl &&
-    !/\.[^/]+$/.test(hotspot.rtspUrl)
-  ) {
-    console.log('RTSP hotspot:', hotspot)
+  } else if (hotspot.videoType === 'rtsp' && hotspot.rtspUrl && !/\.[^/]+$/.test(hotspot.rtspUrl)) {
+    // Giữ nguyên
     rtsp_url.value = hotspot.rtspUrl + '/whep'
+    if (hotspot.hotSpots?.length > 0) {
+      stream_hotspot.value = hotspot.hotSpots
+    }
     isRtspMode.value = true
     currentRtspHotspot.value = hotspot
+    console.log('RTSP mode activated:', hotspot)
   } else {
-    const videoUrl =
-      hotspot?.videoUrl || hotspot?.rtspUrl || 'https://www.w3schools.com/html/mov_bbb.mp4'
+    // Giữ nguyên
+    const videoUrl = hotspot?.videoUrl || hotspot?.rtspUrl || 'https://www.w3schools.com/html/mov_bbb.mp4'
     currentVideoUrl.value = videoUrl
     console.log('Video mode activated with URL:', videoUrl)
   }
 
-  // Show video scene
+  videoScene.style.display = 'flex'
+  setTimeout(() => {
+    videoScene.style.opacity = '1'
+  }, 50)
+}
+
+function showSingleIframe(index) {
+  const videoScene = document.getElementById('videoScene')
+  if (!videoScene) return
+
+  // Push thumbnail state to stack
+  videoStack.value.push({
+    type: 'thumbnail',
+    data: { urls: gridUrls.value, thumbnails: gridThumbnails.value }
+  })
+  console.log('Pushed thumbnail state to stack')
+
+  // Set single iframe mode
+  isThumbnailMode.value = false
+  singleIframeUrl.value = gridUrls.value[index] || 'about:blank'
+  console.log('Single iframe mode activated with URL:', singleIframeUrl.value)
+
   videoScene.style.display = 'flex'
   setTimeout(() => {
     videoScene.style.opacity = '1'
@@ -576,21 +609,63 @@ function closeVideo() {
   const videoScene = document.getElementById('videoScene')
   const panorama = document.getElementById('panorama')
 
-  // Reset all video states
-  isRtspMode.value = false
-  currentRtspHotspot.value = null
-  currentVideoUrl.value = ''
-  isGridMode.value = false
-  gridUrls.value = []
-  gridType.value = 'video'
-
-  // Hide video scene with transition
   if (videoScene) videoScene.style.opacity = '0'
 
   setTimeout(() => {
-    if (videoScene) videoScene.style.display = 'none'
-    if (panorama && viewer) {
-      viewer.lookAt(viewer.getPitch(), viewer.getYaw(), viewer.getHfov(), 0)
+    if (videoStack.value.length > 0) {
+      const prevState = videoStack.value.pop()
+      console.log('Popped from stack:', prevState)
+
+      // Reset current states
+      isRtspMode.value = false
+      currentRtspHotspot.value = null
+      currentVideoUrl.value = ''
+      isGridMode.value = false
+      gridUrls.value = []
+      gridType.value = 'video'
+      stream_hotspot.value = []
+      isThumbnailMode.value = false
+      gridThumbnails.value = []
+      singleIframeUrl.value = ''
+
+      // Restore based on type
+      if (prevState.type === 'rtsp') {
+        rtsp_url.value = prevState.data.hotspot.rtspUrl + '/whep'
+        stream_hotspot.value = prevState.data.stream_hotspot || []
+        isRtspMode.value = true
+        currentRtspHotspot.value = prevState.data.hotspot
+      } else if (prevState.type === 'video') {
+        currentVideoUrl.value = prevState.data.url
+      } else if (prevState.type === 'grid') {
+        isGridMode.value = true
+        gridUrls.value = prevState.data.urls
+        gridType.value = prevState.data.gridType
+      } else if (prevState.type === 'thumbnail') {
+        isThumbnailMode.value = true
+        gridUrls.value = prevState.data.urls
+        gridThumbnails.value = prevState.data.thumbnails
+      } else if (prevState.type === 'singleIframe') {
+        singleIframeUrl.value = prevState.data.url
+      }
+
+      // Keep videoScene visible for previous layer
+      if (videoScene) videoScene.style.display = 'flex'
+      setTimeout(() => { videoScene.style.opacity = '1' }, 50)
+    } else {
+      // No stack: reset all and back to tour
+      if (videoScene) videoScene.style.display = 'none'
+      isRtspMode.value = false
+      currentRtspHotspot.value = null
+      currentVideoUrl.value = ''
+      isGridMode.value = false
+      gridUrls.value = []
+      gridType.value = 'video'
+      isThumbnailMode.value = false
+      gridThumbnails.value = []
+      singleIframeUrl.value = ''
+      if (panorama && viewer) {
+        viewer.lookAt(viewer.getPitch(), viewer.getYaw(), viewer.getHfov(), 0)
+      }
     }
   }, 300)
 }
@@ -600,6 +675,9 @@ onMounted(async () => {
 
   let attempts = 0
   const maxAttempts = 50
+
+  // Fetch scene markers
+  await loadSceneMarkers()
 
   const checkPannellum = () => {
     attempts++
@@ -621,6 +699,47 @@ onMounted(async () => {
 
   checkPannellum()
 })
+
+async function loadSceneMarkers() {
+  try {
+    const markersUrl = `${window.appConfig?.apiUrl || ''}/static/virtual_tour/scene-markers.json`
+    const response = await fetch(markersUrl)
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+    const data = await response.json()
+    sceneMarkers.value = data
+    console.log('Scene markers loaded successfully:', sceneMarkers.value)
+  } catch (error) {
+    console.error('Error loading scene markers:', error)
+    sceneMarkers.value = {} // Fallback rỗng nếu lỗi
+  }
+}
+
+const handleHotspotClickFromStream = (hotspot) => {
+  console.log('Stream hotspot clicked:', hotspot);
+
+  // Kiểm tra nếu hotspot có targetScene thì chuyển scene
+  if (hotspot.targetScene) {
+    console.log('Navigating to scene from stream:', hotspot.targetScene);
+
+    // Đóng video scene trước
+    closeVideo();
+
+    // Chờ một chút để video scene đóng hoàn toàn, rồi chuyển scene
+    setTimeout(() => {
+      streetViewTransition(hotspot.targetScene, hotspot);
+    }, 300); // Đợi video scene đóng hoàn toàn
+
+  } else if (hotspot.action === 'video') {
+    // Nếu là hotspot video khác, có thể xử lý ở đây
+    console.log('Video hotspot clicked from stream');
+    showVideoScene(hotspot);
+
+  } else {
+    console.log('Unknown hotspot action from stream:', hotspot);
+  }
+}
 </script>
 
 <style scoped>
@@ -691,6 +810,7 @@ onMounted(async () => {
   0% {
     transform: rotate(0deg);
   }
+
   100% {
     transform: rotate(360deg);
   }
@@ -841,7 +961,46 @@ onMounted(async () => {
 :deep(.grid-iframe) {
   width: 1280px;
   height: 800px;
-  transform: scale(0.375); /* từ 0.25 (nhỏ) -> 0.375 (vừa) -> 0.5 (to) */
+  transform: scale(0.375);
+  /* từ 0.25 (nhỏ) -> 0.375 (vừa) -> 0.5 (to) */
+  transform-origin: top left;
+  position: absolute;
+  top: 0;
+  left: 0;
+  border: none;
+}
+
+
+.grid-wrapper {
+  position: relative;
+  overflow: hidden;
+}
+
+.thumbnail-image {
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.thumbnail-image:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.single-iframe {
+  width: 90%;
+  height: 80%;
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 4px 40px rgba(0, 0, 0, 0.5);
+}
+
+.grid-iframe {
+  width: 1280px;
+  height: 800px;
+  transform: scale(0.375);
   transform-origin: top left;
   position: absolute;
   top: 0;
@@ -903,7 +1062,8 @@ onMounted(async () => {
   left: 50%;
   transform: translate(-50%, -50%);
   width: 60px;
-  height: 20px; /* thấp hơn để mũi tên bẹt */
+  height: 20px;
+  /* thấp hơn để mũi tên bẹt */
   background: white;
   clip-path: polygon(50% 0, 0 100%, 20% 100%, 50% 40%, 80% 100%, 100% 100%);
   pointer-events: none;
@@ -964,8 +1124,8 @@ onMounted(async () => {
 /* Minimap Toggle Button */
 .minimap-toggle {
   position: fixed;
-  top: 20px;
-  left: 20px;
+  top: 5em;
+  right: 1em;
   background: rgba(0, 0, 0, 0.8);
   color: white;
   padding: 12px 16px;
@@ -991,18 +1151,16 @@ onMounted(async () => {
 /* Minimap Container */
 .minimap-container {
   position: fixed;
-  top: 80px;
-  left: 20px;
+  top: 7.5em;
+  right: 1em;
   background: rgba(0, 0, 0, 0.9);
-  /* border-radius: 12px; */
-  /* border: 2px solid rgba(255, 255, 255, 0.2); */
   z-index: 10;
   transition: all 0.3s ease;
   backdrop-filter: blur(15px);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
   width: 27%;
   max-height: fit-content;
-  animation: slideInLeft 0.3s ease-out;
+  animation: slideInRight 0.3s ease-out;
 }
 
 .minimap-container.expanded {
@@ -1011,11 +1169,12 @@ onMounted(async () => {
   user-select: none;
 }
 
-@keyframes slideInLeft {
+@keyframes slideInRight {
   from {
-    transform: translateX(-100%);
+    transform: translateX(100%);
     opacity: 0;
   }
+
   to {
     transform: translateX(0);
     opacity: 1;
@@ -1159,15 +1318,18 @@ onMounted(async () => {
     transform: scale(1);
     opacity: 1;
   }
+
   50% {
     transform: scale(1.3);
     opacity: 0.7;
   }
+
   100% {
     transform: scale(1);
     opacity: 1;
   }
 }
+
 /* 
 .minimap-content .scene-marker {
   display: none;

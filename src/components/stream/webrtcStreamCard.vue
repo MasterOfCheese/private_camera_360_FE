@@ -97,7 +97,7 @@ const handleError = (err) => {
   }
 }
 
-const processHotspots=(hotSpots)=>{
+const processHotspots = (hotSpots) => {
   hotSpots.forEach(hotspot => {
     hotspot.clickHandlerFunc = function () {
       emit('hotspotclicked', hotspot)
@@ -128,7 +128,7 @@ const initializePannellum = () => {
   }
 
   console.log('Initializing Pannellum...')
-  if (props.hotspots?.length>0){
+  if (props.hotspots?.length > 0) {
     processHotspots(props.hotspots)
   }
   try {
@@ -143,21 +143,41 @@ const initializePannellum = () => {
       dynamicUpdate: videoRef.value && !videoRef.value.paused,
       hotSpots: props.hotspots,
     })
-    pannellumViewer.on('mouseup', () => {
+    // Replace the existing mouseup event handler in file 2 with this:
+    pannellumViewer.on('mouseup', (event) => {
       console.log('config: ', pannellumViewer.getConfig())
       console.log(
-        'data: ',
+        'current view data: ',
         pannellumViewer.getPitch(),
         pannellumViewer.getYaw(),
         pannellumViewer.getHfov(),
       )
+
+      // Get clicked coordinates similar to file 1
+      if (event) {
+        const coords = pannellumViewer.mouseEventToCoords(event)
+        if (coords && coords.length >= 2) {
+          console.log('Clicked coordinates:')
+          console.log('  clicked pitch:', coords[0])
+          console.log('  clicked yaw:', coords[1])
+        } else {
+          console.log('Could not get clicked coordinates')
+        }
+
+        // Also log current camera position for comparison
+        console.log('Current camera position:')
+        console.log('  camera pitch:', pannellumViewer.getPitch())
+        console.log('  camera yaw:', pannellumViewer.getYaw())
+        console.log('  camera hfov:', pannellumViewer.getHfov())
+      }
+
+      // Keep the existing pano settings update
       pano.setPanoSettingFromID(props.camera.id, {
         autoRotate: 0,
         pitch: pannellumViewer.getPitch(),
         yaw: pannellumViewer.getYaw(),
         hfov: pannellumViewer.getHfov(),
       })
-      // console.log('Final pitch:', data.pitch, 'Final yaw:', data.yaw, 'Final hfov:', data.hfov)
     })
 
     // --- Add Event Listeners for Synchronization ---
