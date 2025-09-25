@@ -24,7 +24,7 @@
     <!-- Minimap Container -->
     <div v-show="minimapVisible" class="minimap-container" :class="{ expanded: minimapExpanded }">
       <div class="minimap-header">
-        <span>Floor Plan: B08-1F</span>
+        <span>{{ currentMapInfo?.name || 'Floor Plan' }}</span>
         <div class="minimap-controls">
           <button @click="toggleMinimapSize" class="expand-btn">
             {{ minimapExpanded ? '−' : '+' }}
@@ -42,9 +42,9 @@
           { active: currentSceneId === sceneId },
           { visited: visitedScenes.includes(sceneId) },
         ]" :style="{
-            left: scene.x + '%',
-            top: scene.y + '%',
-          }" @click="jumpToScene(sceneId)" :title="getSceneTitle(sceneId)">
+          left: scene.x + '%',
+          top: scene.y + '%',
+        }" @click="jumpToScene(sceneId)" :title="getSceneTitle(sceneId)">
           <div class="marker-dot"></div>
           <div class="marker-label">{{ scene.label || sceneId }}</div>
         </div>
@@ -82,23 +82,20 @@
       <!-- WebRTC pano -->
       <webrtcStreamCard v-if="isRtspMode && currentRtspHotspot" :key="currentRtspHotspot.rtspUrl"
         :camera="{ id: 'rtsp', panorama: true }" :url="rtsp_url"
-        class="w-full h-full object-cover absolute inset-0 transition-opacity duration-300"
-        :pano=1
-        :hotspots="stream_hotspot"
-        @hotspotclicked="handleHotspotClickFromStream"
-      />
+        class="w-full h-full object-cover absolute inset-0 transition-opacity duration-300" :pano=1
+        :hotspots="stream_hotspot" @hotspotclicked="handleHotspotClickFromStream" />
 
-      <!-- Video element thay vì iframe -->
-      <video v-else-if="currentVideoUrl && !isGridMode" id="videoPlayer" class="video-player" controls autoplay
-        :src="currentVideoUrl" @error="handleVideoError">
+      <!-- Video element - UNCOMMENTED -->
+      <video v-else-if="currentVideoUrl && !isGridMode && !isThumbnailMode && !singleIframeUrl && !isSwiperMode"
+        id="videoPlayer" class="video-player" controls autoplay :src="currentVideoUrl" @error="handleVideoError">
         Your browser does not support the video tag.
       </video>
 
       <!-- Thumbnail grid -->
       <div v-if="isThumbnailMode" class="grid-container">
         <div v-for="(thumbnail, index) in gridThumbnails" :key="index" class="grid-wrapper">
-          <img :src="thumbnail" alt="System Thumbnail" class="thumbnail-image" @click="showSingleIframe(index)" 
-              @error="handleThumbnailError(index)" />
+          <img :src="thumbnail" alt="System Thumbnail" class="thumbnail-image" @click="showSingleIframe(index)"
+            @error="handleThumbnailError(index)" />
         </div>
         <!-- Placeholder cho ô trống nếu gridThumbnails.length < 9 -->
         <div v-for="n in (9 - gridThumbnails.length)" :key="'empty-' + n" class="grid-wrapper placeholder">
@@ -107,8 +104,9 @@
       </div>
 
       <!-- Single iframe mode -->
-      <iframe v-if="singleIframeUrl" class="single-iframe" :src="singleIframeUrl" frameBorder="0" allowfullscreen></iframe>
-      
+      <iframe v-if="singleIframeUrl" class="single-iframe" :src="singleIframeUrl" frameBorder="0"
+        allowfullscreen></iframe>
+
       <!-- Grid container for multiple videos or web pages -->
       <div v-if="isGridMode" class="grid-container">
         <div v-for="(url, index) in gridUrls" :key="index" class="grid-wrapper">
@@ -126,6 +124,38 @@
       </div>
 
       <div id="videoBack" class="video-back" @click="closeVideo">← Back to Tour</div>
+
+      <!-- Swiper video container -->
+      <div v-if="isSwiperMode" class="swiper-video-container">
+        <div class="swiper" ref="swiperContainer">
+          <div class="swiper-wrapper">
+            <div v-for="(videoData, index) in swiperVideos" :key="index" class="swiper-slide">
+              <!-- WebRTC pano -->
+              <webrtcStreamCard v-if="videoData.videoType === 'rtsp' && !/\.[^/]+$/.test(videoData.rtspUrl)"
+                :key="videoData.rtspUrl" :camera="{ id: 'rtsp-' + index, panorama: true }"
+                :url="videoData.rtspUrl + '/whep'" class="w-full h-full object-cover absolute inset-0" :pano="1"
+                :hotspots="videoData.hotSpots || []" @hotspotclicked="handleHotspotClickFromStream" />
+
+              <!-- Regular video -->
+              <video v-else :id="'swiperVideo' + index" class="video-player" controls autoplay
+                :src="videoData.videoUrl || videoData.rtspUrl" @error="handleVideoError">
+                Your browser does not support the video tag.
+              </video>
+
+              <!-- Video info overlay -->
+              <!-- <div class="swiper-video-info">
+            <span>{{ videoData.title || `Video ${index + 1}` }}</span>
+          </div> -->
+            </div>
+          </div>
+        </div>
+        <!-- Swiper navigation -->
+        <div class="swiper-wrapper-btn">
+          <div class="swiper-button-next"></div>
+          <div class="swiper-button-prev"></div>
+          <div class="swiper-pagination"></div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -135,6 +165,19 @@ import { onMounted, nextTick, ref, computed } from 'vue'
 import webrtcStreamCard from '../stream/webrtcStreamCard.vue'
 import 'pannellum/build/pannellum.css'
 import 'pannellum/build/pannellum.js'
+
+//giành cho swiperJS cho slider video:
+import { Swiper } from 'swiper'
+import { Navigation, Pagination, EffectFade } from 'swiper/modules'
+import 'swiper/css'
+import 'swiper/css/navigation'
+import 'swiper/css/pagination'
+import 'swiper/css/effect-fade'
+
+// Thêm reactive variables
+const isSwiperMode = ref(false)
+const swiperVideos = ref([])
+let swiperInstance = null
 
 let isTransitioning = false
 let viewer = null
@@ -177,20 +220,88 @@ const minimapConfig = ref({
   showUnvisitedMarkers: true
 })
 
+// giành cho 1 list các map
+const mapsConfig = ref({}) // Lưu thông tin các map
+const currentMapId = ref('') // Map hiện tại
+const sceneToMapMapping = ref({}) // Mapping scene -> mapId
+
 // Scene coordinates trên map (% từ top-left)
 const sceneMarkers = ref({})
 
 const currentSceneMarker = computed(() => {
-  return sceneMarkers.value[currentSceneId.value]
+  // Tìm scene trong tất cả các floors
+  for (const floorScenes of Object.values(mapsConfig.value.scenes || {})) {
+    if (floorScenes[currentSceneId.value]) {
+      return floorScenes[currentSceneId.value]
+    }
+  }
+  return sceneMarkers.value[currentSceneId.value] // Fallback cho cấu trúc cũ
 })
+
+// Computed cho current map info
+const currentMapInfo = computed(() => {
+  if (!currentMapId.value || !mapsConfig.value.maps) return null
+  return mapsConfig.value.maps[currentMapId.value]
+})
+
+// Computed cho scenes của map hiện tại
+const currentMapScenes = computed(() => {
+  if (!currentMapInfo.value) return {}
+
+  const allScenes = {}
+
+  // Duyệt qua tất cả floors và lấy scenes thuộc map hiện tại
+  for (const [floorName, floorScenes] of Object.entries(mapsConfig.value.scenes || {})) {
+    for (const [sceneId, sceneData] of Object.entries(floorScenes)) {
+      if (sceneData.mapId === currentMapId.value) {
+        allScenes[sceneId] = sceneData
+      }
+    }
+  }
+
+  return allScenes
+})
+
+
+// Method để tìm mapId từ sceneId
+function getMapIdForScene(sceneId) {
+  // Tìm trong structure mới (floors)
+  for (const floorScenes of Object.values(mapsConfig.value.scenes || {})) {
+    if (floorScenes[sceneId]) {
+      return floorScenes[sceneId].mapId || 'map1'
+    }
+  }
+
+  // Fallback cho structure cũ
+  const sceneData = sceneMarkers.value[sceneId]
+  return sceneData?.mapId || 'map1'
+}
+
+function getSceneInfo(sceneId) {
+  // Tìm trong structure mới (floors)
+  for (const floorScenes of Object.values(mapsConfig.value.scenes || {})) {
+    if (floorScenes[sceneId]) {
+      return floorScenes[sceneId]
+    }
+  }
+
+  // Fallback cho structure cũ
+  return sceneMarkers.value[sceneId] || null
+}
 
 // Method to determine if a marker should be shown
 function shouldShowMarker(sceneId) {
+  // Chỉ hiển thị markers thuộc map hiện tại
+  const sceneMapId = getMapIdForScene(sceneId)
+  if (sceneMapId !== currentMapId.value) {
+    return false
+  }
+
   const isActive = currentSceneId.value === sceneId
   const isVisited = visitedScenes.value.includes(sceneId)
   const isUnvisited = !isVisited && !isActive
 
-  // If showAllMarkers is true, show all markers
+  // If showAllMarkers is true, show all markers of current map
   if (minimapConfig.value.showAllMarkers) {
     return true
   }
@@ -210,6 +321,16 @@ function shouldShowMarker(sceneId) {
 
   return false
 }
+
+// Method để chuyển đổi map
+function switchToMap(mapId) {
+  if (currentMapId.value !== mapId && mapsConfig.value.maps[mapId]) {
+    currentMapId.value = mapId
+    loadMapImage() // Reload map image
+    console.log(`Switched to map: ${mapId}`)
+  }
+}
+
 
 function toggleDebug() {
   debugInfo.value = !debugInfo.value
@@ -232,7 +353,13 @@ function closeMinimap() {
 }
 
 function loadMapImage() {
-  mapImageUrl.value = `${window.appConfig?.apiUrl || ''}/static/virtual_tour/3f_template_img/map.png`
+  if (currentMapInfo.value) {
+    mapImageUrl.value = `${window.appConfig?.apiUrl || ''}${currentMapInfo.value.image}`
+    console.log('Loading map image:', mapImageUrl.value)
+  } else {
+    // Fallback to default map
+    mapImageUrl.value = `${window.appConfig?.apiUrl || ''}/static/virtual_tour/3f_template_img/map.png`
+  }
 }
 
 function onMapImageLoaded() {
@@ -257,15 +384,26 @@ function jumpToScene(sceneId) {
 }
 
 function updateCurrentScene(sceneId) {
+  const oldSceneId = currentSceneId.value
   currentSceneId.value = sceneId
+
   if (!visitedScenes.value.includes(sceneId)) {
     visitedScenes.value.push(sceneId)
   }
-  console.log('Updated current scene to:', sceneId, 'Visited:', visitedScenes.value)
+
+  // Tự động chuyển map nếu scene thuộc map khác
+  const newMapId = getMapIdForScene(sceneId)
+  if (newMapId !== currentMapId.value) {
+    console.log(`Auto switching from map ${currentMapId.value} to ${newMapId} for scene ${sceneId}`)
+    switchToMap(newMapId)
+  }
+
+  console.log('Updated current scene to:', sceneId, 'Map:', newMapId, 'Visited:', visitedScenes.value)
 }
 
 function getSceneTitle(sceneId) {
-  return scenesConfig?.sceneInfo?.[sceneId] || sceneId
+  const sceneInfo = getSceneInfo(sceneId)
+  return sceneInfo?.label || scenesConfig?.sceneInfo?.[sceneId] || sceneId
 }
 
 // Video error handlers
@@ -345,6 +483,12 @@ function processHotspots() {
           hotspot.clickHandlerFunc = function () {
             showVideoScene(hotspot)
           }
+        } else if (hotspot.action === 'swiper') {
+          // THÊM CONDITION NÀY
+          hotspot.clickHandlerFunc = function () {
+            console.log('Swiper hotspot clicked:', hotspot)
+            showVideoScene(hotspot)
+          }
         } else if (hotspot.action === 'grid') {
           hotspot.clickHandlerFunc = function () {
             showVideoScene({ ...hotspot, action: 'thumbnail' })
@@ -356,11 +500,16 @@ function processHotspots() {
           hotspot.hotSpots.forEach((streamHotspot) => {
             if (streamHotspot.targetScene) {
               streamHotspot.clickHandlerFunc = function () {
-                // Sẽ được gọi bởi handleHotspotClickFromStream
                 streetViewTransition(streamHotspot.targetScene, streamHotspot);
               }
             } else if (streamHotspot.action === 'video') {
               streamHotspot.clickHandlerFunc = function () {
+                showVideoScene(streamHotspot);
+              }
+            } else if (streamHotspot.action === 'swiper') {
+              // THÊM CHO STREAM HOTSPOT NỮA
+              streamHotspot.clickHandlerFunc = function () {
+                console.log('Stream swiper hotspot clicked:', streamHotspot)
                 showVideoScene(streamHotspot);
               }
             }
@@ -415,6 +564,34 @@ async function initializePanorama() {
     viewer.on('error', (error) => {
       console.error('Pannellum error:', error)
     })
+
+    // THÊM CODE NÀY: Thay đổi Pannellum credit
+    await nextTick()
+
+    // Cách 1: Sử dụng setTimeout với retry mechanism
+    const updatePannellumCredit = () => {
+      const label = panoramaEl.querySelector('.pnlm-about-msg')
+      if (label) {
+        label.innerHTML = `
+          <a href="#" target="_blank" rel="noopener noreferrer">
+            Copyright © 2025 AI Department.
+          </a>
+        `
+        console.log('Pannellum credit updated successfully.')
+      } else {
+        // Retry sau 100ms nếu chưa tìm thấy (tối đa 20 lần = 2 giây)
+        if (updatePannellumCredit.attempts < 20) {
+          updatePannellumCredit.attempts++
+          setTimeout(updatePannellumCredit, 100)
+        } else {
+          console.warn('Pannellum credit label not found after multiple attempts.')
+        }
+      }
+    }
+    updatePannellumCredit.attempts = 0
+
+    // Bắt đầu update credit sau khi viewer được tạo
+    setTimeout(updatePannellumCredit, 100)
 
     // Debug mouse events (optional)
     viewer.on('mousedown', (event) => {
@@ -522,6 +699,8 @@ function showVideoScene(hotspot) {
       currentState = { type: 'thumbnail', data: { urls: gridUrls.value, thumbnails: gridThumbnails.value } }
     } else if (singleIframeUrl.value) {
       currentState = { type: 'singleIframe', data: { url: singleIframeUrl.value } }
+    } else if (isSwiperMode.value) {
+      currentState = { type: 'swiper', data: { videos: swiperVideos.value } }
     }
     videoStack.value.push(currentState)
     console.log('Pushed to stack:', currentState)
@@ -538,6 +717,15 @@ function showVideoScene(hotspot) {
   isThumbnailMode.value = false
   gridThumbnails.value = []
   singleIframeUrl.value = ''
+  isSwiperMode.value = false
+  swiperVideos.value = []
+
+  // Check if this is a swiper hotspot (multiple videos)
+  if (hotspot.action === 'swiper' || (hotspot.videos && Array.isArray(hotspot.videos))) {
+    isSwiperMode.value = true
+    swiperVideos.value = hotspot.videos || []
+    console.log('Swiper mode activated with videos:', swiperVideos.value)
+  }
 
   // Set new state based on hotspot
   if (hotspot.action === 'thumbnail' || (hotspot.action === 'grid' && hotspot.gridType === 'web')) {
@@ -580,7 +768,44 @@ function showVideoScene(hotspot) {
   videoScene.style.display = 'flex'
   setTimeout(() => {
     videoScene.style.opacity = '1'
+    if (isSwiperMode.value) {
+      initSwiper()
+    }
   }, 50)
+}
+
+// Initialize Swiper
+function initSwiper() {
+  nextTick(() => {
+    if (swiperInstance) {
+      swiperInstance.destroy()
+    }
+
+    const swiperEl = document.querySelector('.swiper')
+    if (swiperEl) {
+      swiperInstance = new Swiper(swiperEl, {
+        modules: [Navigation, Pagination, EffectFade],
+        effect: 'slide',
+        speed: 600,
+        navigation: {
+          nextEl: '.swiper-button-next',
+          prevEl: '.swiper-button-prev',
+        },
+        pagination: {
+          el: '.swiper-pagination',
+          clickable: true,
+          type: 'bullets',
+          dynamicBullets: true,
+          dynamicMainBullets: 3,
+        },
+        // lặp vô hạn thì cho là loop: swiperVideos.value.length > 1, 
+        loop: false,
+        autoHeight: true,
+      })
+
+      console.log('Swiper initialized with', swiperVideos.value.length, 'slides')
+    }
+  })
 }
 
 function showSingleIframe(index) {
@@ -611,6 +836,12 @@ function closeVideo() {
 
   if (videoScene) videoScene.style.opacity = '0'
 
+  // Destroy swiper if exists
+  if (swiperInstance) {
+    swiperInstance.destroy()
+    swiperInstance = null
+  }
+
   setTimeout(() => {
     if (videoStack.value.length > 0) {
       const prevState = videoStack.value.pop()
@@ -627,6 +858,8 @@ function closeVideo() {
       isThumbnailMode.value = false
       gridThumbnails.value = []
       singleIframeUrl.value = ''
+      isSwiperMode.value = false
+      swiperVideos.value = []
 
       // Restore based on type
       if (prevState.type === 'rtsp') {
@@ -646,6 +879,10 @@ function closeVideo() {
         gridThumbnails.value = prevState.data.thumbnails
       } else if (prevState.type === 'singleIframe') {
         singleIframeUrl.value = prevState.data.url
+      } else if (prevState.type === 'swiper') {
+        isSwiperMode.value = true
+        swiperVideos.value = prevState.data.videos
+        setTimeout(initSwiper, 100)
       }
 
       // Keep videoScene visible for previous layer
@@ -663,6 +900,8 @@ function closeVideo() {
       isThumbnailMode.value = false
       gridThumbnails.value = []
       singleIframeUrl.value = ''
+      isSwiperMode.value = false
+      swiperVideos.value = []
       if (panorama && viewer) {
         viewer.lookAt(viewer.getPitch(), viewer.getYaw(), viewer.getHfov(), 0)
       }
@@ -708,11 +947,72 @@ async function loadSceneMarkers() {
       throw new Error(`HTTP error! status: ${response.status}`)
     }
     const data = await response.json()
-    sceneMarkers.value = data
-    console.log('Scene markers loaded successfully:', sceneMarkers.value)
+
+    // Kiểm tra cấu trúc mới với floors
+    if (data.maps && data.scenes && typeof data.scenes === 'object') {
+      // Check nếu scenes có cấu trúc floor (nested objects)
+      const firstSceneKey = Object.keys(data.scenes)[0]
+      if (firstSceneKey && typeof data.scenes[firstSceneKey] === 'object' && !data.scenes[firstSceneKey].x) {
+        // Cấu trúc floors (scenes.floor1.scene001, scenes.floor3.scene002...)
+        console.log('Loading scenes with floor structure')
+        mapsConfig.value = data
+
+        // Flatten scenes để tương thích với code cũ
+        const flatScenes = {}
+        for (const floorScenes of Object.values(data.scenes)) {
+          Object.assign(flatScenes, floorScenes)
+        }
+        sceneMarkers.value = flatScenes
+      } else {
+        // Cấu trúc flat cũ (scenes.scene001, scenes.scene002...)
+        console.log('Loading scenes with flat structure')
+        mapsConfig.value = data
+        sceneMarkers.value = data.scenes
+      }
+
+      // Tìm map đầu tiên để set làm default
+      const firstMapId = Object.keys(data.maps)[0]
+      if (firstMapId) {
+        currentMapId.value = firstMapId
+        console.log('Set default map to:', firstMapId)
+      }
+    } else {
+      // Cấu trúc cũ hoàn toàn - tạo map mặc định
+      console.log('Using legacy structure, creating default map')
+      sceneMarkers.value = data
+      mapsConfig.value = {
+        maps: {
+          'map1': {
+            name: 'Default Floor Plan',
+            image: '/static/virtual_tour/3f_template_img/map-1f.png',
+            scenes: Object.keys(data)
+          }
+        },
+        scenes: {
+          'floor1': data
+        }
+      }
+      currentMapId.value = 'map1'
+    }
+
+    console.log('Scene markers loaded successfully:', mapsConfig.value)
   } catch (error) {
     console.error('Error loading scene markers:', error)
-    sceneMarkers.value = {} // Fallback rỗng nếu lỗi
+    // Fallback configuration
+    mapsConfig.value = {
+      maps: {
+        'map1': {
+          name: 'Default Floor Plan',
+          image: '/static/virtual_tour/3f_template_img/map-1f.png',
+          scenes: []
+        }
+      },
+      scenes: {
+        'floor1': {}
+      }
+    }
+    sceneMarkers.value = {}
+    currentMapId.value = 'map1'
   }
 }
 
@@ -736,9 +1036,26 @@ const handleHotspotClickFromStream = (hotspot) => {
     console.log('Video hotspot clicked from stream');
     showVideoScene(hotspot);
 
+  } else if (hotspot.action === 'grid') {
+    console.log('Grid hotspot clicked from stream');
+    showVideoScene(hotspot);
+    
+  } else if (hotspot.action === 'swiper') {
+    // THÊM CASE NÀY
+    console.log('Swiper hotspot clicked from stream');
+    showVideoScene(hotspot);
+    
+  } else if (hotspot.action === 'thumbnail') {
+    console.log('Thumbnail hotspot clicked from stream');
+    showVideoScene(hotspot);
+    
   } else {
     console.log('Unknown hotspot action from stream:', hotspot);
   }
+}
+
+function handleThumbnailError(index) {
+  console.error(`Thumbnail ${index} failed to load:`, gridThumbnails.value[index])
 }
 </script>
 
@@ -746,7 +1063,7 @@ const handleHotspotClickFromStream = (hotspot) => {
 .tour-wrapper {
   position: relative;
   width: 100%;
-  height: 100vh;
+  height: 100%;
   overflow: hidden;
 }
 
@@ -879,7 +1196,7 @@ const handleHotspotClickFromStream = (hotspot) => {
   width: 100%;
   height: 100%;
   background: linear-gradient(135deg, rgb(166 166 166 / 0%), rgb(96 52 52 / 0%));
-  z-index: 9999;
+  z-index: 3;
   justify-content: center;
   align-items: center;
   backdrop-filter: blur(8px);
@@ -907,6 +1224,7 @@ const handleHotspotClickFromStream = (hotspot) => {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   backdrop-filter: blur(10px);
   box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+  z-index: 100;
 }
 
 .video-back:hover {
@@ -931,9 +1249,7 @@ const handleHotspotClickFromStream = (hotspot) => {
 }
 
 .video-player {
-  max-width: 90%;
-  max-height: 80%;
-  width: auto;
+  width: 100%;
   height: auto;
   border-radius: 8px;
   box-shadow: 0 4px 40px rgba(0, 0, 0, 0.5);
@@ -1131,7 +1447,7 @@ const handleHotspotClickFromStream = (hotspot) => {
   padding: 12px 16px;
   border-radius: 8px;
   cursor: pointer;
-  z-index: 1000;
+  z-index: 2;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1338,4 +1654,83 @@ const handleHotspotClickFromStream = (hotspot) => {
 .minimap-content .scene-marker.active {
   display: block;
 } */
+
+/* swiper ở đây */
+.swiper-video-container {
+  position: absolute;
+  top: 10%;
+  width: 75%;
+  height: 100%;
+}
+
+.swiper {
+  width: 100%;
+  height: 100%;
+}
+
+.swiper-slide {
+  position: relative;
+  height: 100%;
+  width: 80%;
+  margin: 0 auto;
+  transform: translateY(11%);
+}
+
+.swiper-wrapper-btn {
+  position: absolute;
+  z-index: 20;
+  width: 114%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: end;
+  left: 50%;
+  top: 41%;
+  transform: translateY(-50%) translateX(-50%);
+}
+
+.swiper-button-next,
+.swiper-button-prev {
+  color: white !important;
+  width: 50px !important;
+  height: 50px !important;
+  border-radius: 50%;
+  margin-top: -15px !important;
+}
+
+/* Làm icon arrow nhỏ hơn */
+.swiper-button-next:after,
+.swiper-button-prev:after {
+  font-size: 12px !important;
+  /* Giảm size icon */
+  font-weight: bold;
+}
+
+/* Pagination dots */
+.swiper-pagination {
+  justify-content: space-between;
+  display: flex;
+  position: relative;
+  left: 0 !important;
+  transform: translateY(-50px) !important;
+  width: 5% !important;
+}
+
+.swiper-pagination-bullet {
+  background: rgba(255, 255, 255, 0.5) !important;
+  width: 15px !important;
+  height: 15px !important;
+  border-radius: 50px;
+  margin: 0 4px !important;
+  opacity: 0.7;
+  transition: all 0.3s ease;
+  padding: 10px;
+}
+
+.swiper-pagination-bullet-active {
+  background: white !important;
+  opacity: 1;
+  transform: scale(1.2);
+  /* Active dot lớn hơn một chút */
+}
 </style>
