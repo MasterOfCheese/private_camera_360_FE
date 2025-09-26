@@ -47,7 +47,7 @@
         class="w-full h-full object-cover absolute inset-0 transition-opacity duration-300" :pano=1
         :hotspots="stream_hotspot" @hotspotclicked="handleHotspotClickFromStream" />
 
-      <!-- Video element - UNCOMMENTED -->
+      <!-- Video element -->
       <video v-else-if="currentVideoUrl && !isGridMode && !isThumbnailMode && !singleIframeUrl && !isSwiperMode"
         id="videoPlayer" class="video-player" controls autoplay :src="currentVideoUrl" @error="handleVideoError">
         Your browser does not support the video tag.
@@ -85,39 +85,19 @@
         </div>
       </div>
 
+      <!-- Video Swiper Component -->
+      <VideoSwiper
+        v-if="isSwiperMode"
+        :videos="swiperVideos"
+        :show-video-info="false"
+        :swiper-options="swiperOptions"
+        @hotspot-clicked="handleHotspotClickFromStream"
+        @video-error="handleVideoError"
+        @swiper-initialized="onSwiperInitialized"
+        ref="videoSwiperRef"
+      />
+
       <div id="videoBack" class="video-back" @click="closeVideo">← Back to Tour</div>
-
-      <!-- Swiper video container -->
-      <div v-if="isSwiperMode" class="swiper-video-container">
-        <div class="swiper" ref="swiperContainer">
-          <div class="swiper-wrapper">
-            <div v-for="(videoData, index) in swiperVideos" :key="index" class="swiper-slide">
-              <!-- WebRTC pano -->
-              <webrtcStreamCard v-if="videoData.videoType === 'rtsp' && !/\.[^/]+$/.test(videoData.rtspUrl)"
-                :key="videoData.rtspUrl" :camera="{ id: 'rtsp-' + index, panorama: true }"
-                :url="videoData.rtspUrl + '/whep'" class="w-full h-full object-cover absolute inset-0" :pano="1"
-                :hotspots="videoData.hotSpots || []" @hotspotclicked="handleHotspotClickFromStream" />
-
-              <!-- Regular video -->
-              <video v-else :id="'swiperVideo' + index" class="video-player" controls autoplay
-                :src="videoData.videoUrl || videoData.rtspUrl" @error="handleVideoError">
-                Your browser does not support the video tag.
-              </video>
-
-              <!-- Video info overlay -->
-              <!-- <div class="swiper-video-info">
-            <span>{{ videoData.title || `Video ${index + 1}` }}</span>
-          </div> -->
-            </div>
-          </div>
-        </div>
-        <!-- Swiper navigation -->
-        <div class="swiper-wrapper-btn">
-          <div class="swiper-button-next"></div>
-          <div class="swiper-button-prev"></div>
-          <div class="swiper-pagination"></div>
-        </div>
-      </div>
     </div>
   </div>
 </template>
@@ -126,21 +106,19 @@
 import { onMounted, nextTick, ref } from 'vue'
 import webrtcStreamCard from '../stream/webrtcStreamCard.vue'
 import MiniMap from '../map/mini-map.vue'
+import VideoSwiper from '../carousel/VideoSwiper.vue'
 import 'pannellum/build/pannellum.css'
 import 'pannellum/build/pannellum.js'
 
-//giành cho swiperJS cho slider video:
-import { Swiper } from 'swiper'
-import { Navigation, Pagination, EffectFade } from 'swiper/modules'
-import 'swiper/css'
-import 'swiper/css/navigation'
-import 'swiper/css/pagination'
-import 'swiper/css/effect-fade'
-
-// Thêm reactive variables
+// Reactive variables
 const isSwiperMode = ref(false)
 const swiperVideos = ref([])
-let swiperInstance = null
+const swiperOptions = ref({
+  effect: 'slide',
+  speed: 600,
+  loop: false,
+  autoHeight: true
+})
 
 let isTransitioning = false
 let viewer = null
@@ -172,8 +150,9 @@ const showLoading = ref(false)
 const currentSceneId = ref('scene001')
 const visitedScenes = ref([])
 
-// Reference to mini-map component
+// Component refs
 const miniMapRef = ref(null)
+const videoSwiperRef = ref(null)
 
 function toggleDebug() {
   debugInfo.value = !debugInfo.value
@@ -215,6 +194,11 @@ function handleGridVideoError(index) {
 
 function handleVideoLoadStart(index) {
   console.log(`Grid video ${index} started loading:`, gridUrls.value[index])
+}
+
+// Swiper event handlers
+function onSwiperInitialized(swiperInstance) {
+  console.log('VideoSwiper initialized:', swiperInstance)
 }
 
 async function loadConfiguration() {
@@ -275,7 +259,6 @@ function processHotspots() {
             showVideoScene(hotspot)
           }
         } else if (hotspot.action === 'swiper') {
-          // THÊM CONDITION NÀY
           hotspot.clickHandlerFunc = function () {
             console.log('Swiper hotspot clicked:', hotspot)
             showVideoScene(hotspot)
@@ -298,7 +281,6 @@ function processHotspots() {
                 showVideoScene(streamHotspot);
               }
             } else if (streamHotspot.action === 'swiper') {
-              // THÊM CHO STREAM HOTSPOT NỮA
               streamHotspot.clickHandlerFunc = function () {
                 console.log('Stream swiper hotspot clicked:', streamHotspot)
                 showVideoScene(streamHotspot);
@@ -356,10 +338,9 @@ async function initializePanorama() {
       console.error('Pannellum error:', error)
     })
 
-    // THÊM CODE NÀY: Thay đổi Pannellum credit
+    // Thay đổi Pannellum credit
     await nextTick()
 
-    // Cách 1: Sử dụng setTimeout với retry mechanism
     const updatePannellumCredit = () => {
       const label = panoramaEl.querySelector('.pnlm-about-msg')
       if (label) {
@@ -370,7 +351,6 @@ async function initializePanorama() {
         `
         console.log('Pannellum credit updated successfully.')
       } else {
-        // Retry sau 100ms nếu chưa tìm thấy (tối đa 20 lần = 2 giây)
         if (updatePannellumCredit.attempts < 20) {
           updatePannellumCredit.attempts++
           setTimeout(updatePannellumCredit, 100)
@@ -381,17 +361,12 @@ async function initializePanorama() {
     }
     updatePannellumCredit.attempts = 0
 
-    // Bắt đầu update credit sau khi viewer được tạo
     setTimeout(updatePannellumCredit, 100)
 
     // Debug mouse events (optional)
     viewer.on('mousedown', (event) => {
       const canvas = document.querySelector('#panorama canvas')
       if (canvas && event) {
-        const rect = canvas.getBoundingClientRect()
-        const x = event.clientX - rect.left
-        const y = event.clientY - rect.top
-
         const coords = viewer.mouseEventToCoords(event)
         if (coords && coords.length >= 2) {
           console.log('Clicked coordinates:')
@@ -461,8 +436,6 @@ function streetViewTransition(sceneId, hotspot) {
     viewer.loadScene(sceneId, targetPitch, targetYaw, 100, {
       transitionDuration: 600,
     })
-
-    // Current scene will be updated automatically via scenechange event
   }, 700)
 
   setTimeout(() => {
@@ -477,8 +450,8 @@ function showVideoScene(hotspot) {
   const videoScene = document.getElementById('videoScene')
   if (!videoScene) return
 
-  // Push current state if nested (giữ nguyên như cũ)
-  if (isRtspMode.value || currentVideoUrl.value || isGridMode.value || isThumbnailMode.value || singleIframeUrl.value) {
+  // Push current state if nested
+  if (isRtspMode.value || currentVideoUrl.value || isGridMode.value || isThumbnailMode.value || singleIframeUrl.value || isSwiperMode.value) {
     let currentState = {}
     if (isRtspMode.value) {
       currentState = { type: 'rtsp', data: { hotspot: currentRtspHotspot.value, stream_hotspot: stream_hotspot.value } }
@@ -497,19 +470,8 @@ function showVideoScene(hotspot) {
     console.log('Pushed to stack:', currentState)
   }
 
-  // Reset states (giữ nguyên như cũ)
-  isRtspMode.value = false
-  currentRtspHotspot.value = null
-  currentVideoUrl.value = ''
-  isGridMode.value = false
-  gridUrls.value = []
-  gridType.value = 'video'
-  stream_hotspot.value = []
-  isThumbnailMode.value = false
-  gridThumbnails.value = []
-  singleIframeUrl.value = ''
-  isSwiperMode.value = false
-  swiperVideos.value = []
+  // Reset states
+  resetVideoStates()
 
   // Check if this is a swiper hotspot (multiple videos)
   if (hotspot.action === 'swiper' || (hotspot.videos && Array.isArray(hotspot.videos))) {
@@ -524,24 +486,20 @@ function showVideoScene(hotspot) {
     const thumbnails = hotspot.thumbnailUrl && Array.isArray(hotspot.thumbnailUrl) ? hotspot.thumbnailUrl : []
 
     if (urls.length === 1) {
-      // Trường hợp single item: chuyển thẳng sang single iframe
       singleIframeUrl.value = urls[0] || ''
       console.log('Single iframe mode activated with URL:', singleIframeUrl.value)
     } else {
-      // Trường hợp nhiều item hoặc rỗng: dùng thumbnail mode
       isThumbnailMode.value = true
       gridUrls.value = urls
-      gridThumbnails.value = thumbnails.slice(0, 9) // Giới hạn 9, không fill
+      gridThumbnails.value = thumbnails.slice(0, 9)
       console.log('Thumbnail mode activated with URLs:', gridUrls.value, 'Thumbnails:', gridThumbnails.value)
     }
   } else if (hotspot.action === 'grid' && hotspot.gridType !== 'web') {
-    // Giữ nguyên cho grid video
     isGridMode.value = true
     gridUrls.value = hotspot.urls || hotspot.gridUrls || Array(9).fill('')
     gridType.value = hotspot.gridType === 'web' ? 'web' : 'video'
     console.log(`Grid mode activated (${gridType.value}) with URLs:`, gridUrls.value)
   } else if (hotspot.videoType === 'rtsp' && hotspot.rtspUrl && !/\.[^/]+$/.test(hotspot.rtspUrl)) {
-    // Giữ nguyên
     rtsp_url.value = hotspot.rtspUrl + '/whep'
     if (hotspot.hotSpots?.length > 0) {
       stream_hotspot.value = hotspot.hotSpots
@@ -550,7 +508,6 @@ function showVideoScene(hotspot) {
     currentRtspHotspot.value = hotspot
     console.log('RTSP mode activated:', hotspot)
   } else {
-    // Giữ nguyên
     const videoUrl = hotspot?.videoUrl || hotspot?.rtspUrl || 'https://www.w3schools.com/html/mov_bbb.mp4'
     currentVideoUrl.value = videoUrl
     console.log('Video mode activated with URL:', videoUrl)
@@ -559,44 +516,22 @@ function showVideoScene(hotspot) {
   videoScene.style.display = 'flex'
   setTimeout(() => {
     videoScene.style.opacity = '1'
-    if (isSwiperMode.value) {
-      initSwiper()
-    }
   }, 50)
 }
 
-// Initialize Swiper
-function initSwiper() {
-  nextTick(() => {
-    if (swiperInstance) {
-      swiperInstance.destroy()
-    }
-
-    const swiperEl = document.querySelector('.swiper')
-    if (swiperEl) {
-      swiperInstance = new Swiper(swiperEl, {
-        modules: [Navigation, Pagination, EffectFade],
-        effect: 'slide',
-        speed: 600,
-        navigation: {
-          nextEl: '.swiper-button-next',
-          prevEl: '.swiper-button-prev',
-        },
-        pagination: {
-          el: '.swiper-pagination',
-          clickable: true,
-          type: 'bullets',
-          dynamicBullets: true,
-          dynamicMainBullets: 3,
-        },
-        // lặp vô hạn thì cho là loop: swiperVideos.value.length > 1, 
-        loop: false,
-        autoHeight: true,
-      })
-
-      console.log('Swiper initialized with', swiperVideos.value.length, 'slides')
-    }
-  })
+function resetVideoStates() {
+  isRtspMode.value = false
+  currentRtspHotspot.value = null
+  currentVideoUrl.value = ''
+  isGridMode.value = false
+  gridUrls.value = []
+  gridType.value = 'video'
+  stream_hotspot.value = []
+  isThumbnailMode.value = false
+  gridThumbnails.value = []
+  singleIframeUrl.value = ''
+  isSwiperMode.value = false
+  swiperVideos.value = []
 }
 
 function showSingleIframe(index) {
@@ -628,9 +563,8 @@ function closeVideo() {
   if (videoScene) videoScene.style.opacity = '0'
 
   // Destroy swiper if exists
-  if (swiperInstance) {
-    swiperInstance.destroy()
-    swiperInstance = null
+  if (videoSwiperRef.value) {
+    videoSwiperRef.value.destroySwiper()
   }
 
   setTimeout(() => {
@@ -639,18 +573,7 @@ function closeVideo() {
       console.log('Popped from stack:', prevState)
 
       // Reset current states
-      isRtspMode.value = false
-      currentRtspHotspot.value = null
-      currentVideoUrl.value = ''
-      isGridMode.value = false
-      gridUrls.value = []
-      gridType.value = 'video'
-      stream_hotspot.value = []
-      isThumbnailMode.value = false
-      gridThumbnails.value = []
-      singleIframeUrl.value = ''
-      isSwiperMode.value = false
-      swiperVideos.value = []
+      resetVideoStates()
 
       // Restore based on type
       if (prevState.type === 'rtsp') {
@@ -673,7 +596,7 @@ function closeVideo() {
       } else if (prevState.type === 'swiper') {
         isSwiperMode.value = true
         swiperVideos.value = prevState.data.videos
-        setTimeout(initSwiper, 100)
+        // VideoSwiper component will auto-initialize via watch
       }
 
       // Keep videoScene visible for previous layer
@@ -682,17 +605,7 @@ function closeVideo() {
     } else {
       // No stack: reset all and back to tour
       if (videoScene) videoScene.style.display = 'none'
-      isRtspMode.value = false
-      currentRtspHotspot.value = null
-      currentVideoUrl.value = ''
-      isGridMode.value = false
-      gridUrls.value = []
-      gridType.value = 'video'
-      isThumbnailMode.value = false
-      gridThumbnails.value = []
-      singleIframeUrl.value = ''
-      isSwiperMode.value = false
-      swiperVideos.value = []
+      resetVideoStates()
       if (panorama && viewer) {
         viewer.lookAt(viewer.getPitch(), viewer.getYaw(), viewer.getHfov(), 0)
       }
@@ -743,7 +656,6 @@ const handleHotspotClickFromStream = (hotspot) => {
     }, 300); // Đợi video scene đóng hoàn toàn
 
   } else if (hotspot.action === 'video') {
-    // Nếu là hotspot video khác, có thể xử lý ở đây
     console.log('Video hotspot clicked from stream');
     showVideoScene(hotspot);
 
@@ -752,7 +664,6 @@ const handleHotspotClickFromStream = (hotspot) => {
     showVideoScene(hotspot);
     
   } else if (hotspot.action === 'swiper') {
-    // THÊM CASE NÀY
     console.log('Swiper hotspot clicked from stream');
     showVideoScene(hotspot);
     
@@ -1146,94 +1057,5 @@ function handleThumbnailError(index) {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   backdrop-filter: blur(10px);
   box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
-}
-
-
-/* 
-.minimap-content .scene-marker {
-  display: none;
-}
-
-.minimap-content .scene-marker.active {
-  display: block;
-} */
-
-/* swiper ở đây */
-.swiper-video-container {
-  position: absolute;
-  top: 10%;
-  width: 75%;
-  height: 100%;
-}
-
-.swiper {
-  width: 100%;
-  height: 100%;
-}
-
-.swiper-slide {
-  position: relative;
-  height: 100%;
-  width: 80%;
-  margin: 0 auto;
-  transform: translateY(11%);
-}
-
-.swiper-wrapper-btn {
-  position: absolute;
-  z-index: 20;
-  width: 114%;
-  height: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: end;
-  left: 50%;
-  top: 41%;
-  transform: translateY(-50%) translateX(-50%);
-}
-
-.swiper-button-next,
-.swiper-button-prev {
-  color: white !important;
-  width: 50px !important;
-  height: 50px !important;
-  border-radius: 50%;
-  margin-top: -15px !important;
-}
-
-/* Làm icon arrow nhỏ hơn */
-.swiper-button-next:after,
-.swiper-button-prev:after {
-  font-size: 12px !important;
-  /* Giảm size icon */
-  font-weight: bold;
-}
-
-/* Pagination dots */
-.swiper-pagination {
-  justify-content: space-between;
-  display: flex;
-  position: relative;
-  left: 0 !important;
-  transform: translateY(-50px) !important;
-  width: 5% !important;
-}
-
-.swiper-pagination-bullet {
-  background: rgba(255, 255, 255, 0.5) !important;
-  width: 15px !important;
-  height: 15px !important;
-  border-radius: 50px;
-  margin: 0 4px !important;
-  opacity: 0.7;
-  transition: all 0.3s ease;
-  padding: 10px;
-}
-
-.swiper-pagination-bullet-active {
-  background: white !important;
-  opacity: 1;
-  transform: scale(1.2);
-  /* Active dot lớn hơn một chút */
 }
 </style>
