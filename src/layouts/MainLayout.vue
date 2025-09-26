@@ -5,7 +5,7 @@
     <CCTV_MonitoringHeader />
     <div class="flex flex-1">
       <CCTV_MonitoringSidebar />
-      <div class="flex-1">
+      <div class="flex-1 overflow-auto">
         <router-view v-slot="{ Component }">
           <transition name="fade" mode="out-in">
             <component :is="Component" class="" />
