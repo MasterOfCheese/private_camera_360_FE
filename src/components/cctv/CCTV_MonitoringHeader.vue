@@ -3,6 +3,13 @@
   <header
     class="bg-gray-800/60 backdrop-blur-xl border-b border-white/10 h-16 px-6 flex items-center justify-between text-gray-200 flex-shrink-0 shadow-lg">
     <div class="flex items-center">
+      <button
+        @click="emit('toggle-sidebar')"
+        title="Toggle Sidebar"
+        class="mr-4 text-gray-400 hover:text-white focus:outline-none rounded-full p-2 hover:bg-white/10 transition"
+      >
+        <i class="pi pi-bars text-xl"></i>
+      </button>
       <div class="flex items-center mr-6">
         <!-- <i class="pi pi-video text-accent mr-4 text-blue-400" style="font-size: 23px;"></i> -->
         <p class="text-white text-2xl font-bold tracking-tight flex">
@@ -41,13 +48,13 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, watch } from 'vue'
+import { ref, onMounted, computed, watch, defineEmits } from 'vue'
 import { useAuthStore } from '@/stores'
 // Removed PrimeVue Button import, using standard buttons now
 import 'primeicons/primeicons.css'
 import Select from 'primevue/select';
 import OverlayPanel from 'primevue/overlaypanel'
-
+const emit = defineEmits(['toggle-sidebar'])
 import { useI18n } from 'vue-i18n';
 const { t } = useI18n();
 

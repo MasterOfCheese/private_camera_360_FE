@@ -2,9 +2,9 @@
   <div
     class="flex flex-col h-screen w-full bg-gradient-to-br from-gray-900 via-blue-900 to-gray-800"
   >
-    <CCTV_MonitoringHeader />
+    <CCTV_MonitoringHeader @toggle-sidebar="toggleSideBar"/>
     <div class="flex flex-1">
-      <CCTV_MonitoringSidebar />
+      <CCTV_MonitoringSidebar :is-visible="isSideBarOpen" />
       <div class="flex-1 overflow-auto">
         <router-view v-slot="{ Component }">
           <transition name="fade" mode="out-in">
@@ -19,8 +19,13 @@
 <script setup>
 import CCTV_MonitoringHeader from '@/components/cctv/CCTV_MonitoringHeader.vue'
 import CCTV_MonitoringSidebar from '@/components/cctv/CCTV_MonitoringSidebar.vue'
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import { fetchWrapper } from '@/helper'
+
+const isSideBarOpen = ref(true)
+const toggleSideBar = ()=>{
+  isSideBarOpen.value = !isSideBarOpen.value
+}
 const keepAlive = async () => {
   const res = await fetchWrapper.get(`${window.appConfig?.apiUrl}/v1/auth/users/me`)
 }

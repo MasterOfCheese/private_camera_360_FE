@@ -1,5 +1,5 @@
 <template>
-  <div class="tour-wrapper">
+  <div class="tour-wrapper relative">
     <!-- Debug info -->
     <div v-if="debugInfo" class="debug-info">
       <p>Pannellum loaded: {{ pannellumLoaded }}</p>
@@ -790,9 +790,9 @@ function handleThumbnailError(index) {
 }
 
 .scene-info {
-  position: fixed;
-  bottom: 30px;
-  left: 260px;
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
   background: rgba(0, 0, 0, 0.7);
   color: white;
   padding: 15px 25px;
@@ -1008,28 +1008,50 @@ function handleThumbnailError(index) {
 }
 
 .video-hotspot {
-  width: 40px;
+  width: 60px;
   height: 40px;
-  background: rgba(255, 0, 0, 0.8);
-  border: 3px solid #ff4444;
-  border-radius: 8px;
-  /* transition: all 0.3s ease; */
-}
-
-.video-hotspot:hover {
-  background: #ff4444;
-  transform: scale(1.2);
-}
-
-.video-hotspot::before {
-  content: '▶';
+  background: rgba(0, 132, 255, 0.185); /* nền trắng mờ */
+  backdrop-filter: blur(6px); /* blur */
+  border: 2px solid rgba(0, 162, 255, 0.4);
+  border-radius: 6px;
   position: absolute;
-  top: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff; /* font trắng */
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 2px 6px rgba(0, 140, 255, 0.25);
+  cursor: pointer;
+}
+
+/* Chân màn hình */
+.video-hotspot::after {
+  content: "";
+  position: absolute;
+  bottom: -8px;
   left: 50%;
-  transform: translate(-50%, -50%);
-  color: white;
-  font-size: 16px;
-  font-weight: bold;
+  transform: translateX(-50%);
+  width: 28px;
+  height: 6px;
+  background: rgba(0, 132, 255, 0.473);
+  border-radius: 3px;
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(0, 102, 255, 0.4);
+}
+
+/* Icon hiển thị ở giữa màn hình */
+.video-hotspot::before {
+  content: "▶";
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+/* Hover effect */
+.video-hotspot:hover {
+  transform: scale(1.1);
+  background: rgba(0, 132, 255, 0.473);
 }
 
 #panorama {
