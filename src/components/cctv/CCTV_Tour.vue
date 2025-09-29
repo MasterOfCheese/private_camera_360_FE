@@ -13,13 +13,8 @@
     </div>
 
     <!-- Mini Map Component -->
-    <MiniMap
-      :current-scene-id="currentSceneId"
-      :visited-scenes="visitedScenes"
-      :scenes-config="scenesConfig"
-      @jump-to-scene="handleJumpToScene"
-      ref="miniMapRef"
-    />
+    <MiniMap :current-scene-id="currentSceneId" :visited-scenes="visitedScenes" :scenes-config="scenesConfig"
+      @jump-to-scene="handleJumpToScene" ref="miniMapRef" />
 
     <!-- Panorama viewer -->
     <div id="panorama" class="panorama-container"></div>
@@ -41,6 +36,16 @@
 
     <!-- Video overlay -->
     <div id="videoScene" class="video-scene">
+
+      <!-- Live Badge - hiển thị khi isRtspMode = true -->
+      <div v-if="isRtspMode" class="live-badge">
+        <span class="live-dot"></span>
+        LIVE
+      </div>
+
+      <img v-if="currentImageUrl && !isGridMode && !isThumbnailMode && !singleIframeUrl && !isSwiperMode && !isRtspMode"
+        :src="currentImageUrl" class="image-viewer" @error="handleImageError" alt="Full screen image" />
+
       <!-- WebRTC pano -->
       <webrtcStreamCard v-if="isRtspMode && currentRtspHotspot" :key="currentRtspHotspot.rtspUrl"
         :camera="{ id: 'rtsp', panorama: true }" :url="rtsp_url"
@@ -48,7 +53,8 @@
         :hotspots="stream_hotspot" @hotspotclicked="handleHotspotClickFromStream" />
 
       <!-- Video element -->
-      <video v-else-if="currentVideoUrl && !isGridMode && !isThumbnailMode && !singleIframeUrl && !isSwiperMode"
+      <video
+        v-else-if="currentVideoUrl && !currentImageUrl && !isGridMode && !isThumbnailMode && !singleIframeUrl && !isSwiperMode"
         id="videoPlayer" class="video-player" controls autoplay :src="currentVideoUrl" @error="handleVideoError">
         Your browser does not support the video tag.
       </video>
@@ -86,16 +92,9 @@
       </div>
 
       <!-- Video Swiper Component -->
-      <VideoSwiper
-        v-if="isSwiperMode"
-        :videos="swiperVideos"
-        :show-video-info="false"
-        :swiper-options="swiperOptions"
-        @hotspot-clicked="handleHotspotClickFromStream"
-        @video-error="handleVideoError"
-        @swiper-initialized="onSwiperInitialized"
-        ref="videoSwiperRef"
-      />
+      <VideoSwiper v-if="isSwiperMode" :videos="swiperVideos" :show-video-info="false" :swiper-options="swiperOptions"
+        @hotspot-clicked="handleHotspotClickFromStream" @video-error="handleVideoError"
+        @swiper-initialized="onSwiperInitialized" ref="videoSwiperRef" />
 
       <div id="videoBack" class="video-back" @click="closeVideo">← Back to Tour</div>
     </div>
@@ -136,6 +135,7 @@ const gridType = ref('video') // 'video' or 'web'
 const isThumbnailMode = ref(false) // New state for thumbnail grid
 const gridThumbnails = ref([]) // Store thumbnail URLs
 const singleIframeUrl = ref('') // Store single iframe URL for enlarged view
+const currentImageUrl = ref('')
 
 // pano settings
 const isRtspMode = ref(false)
@@ -186,6 +186,11 @@ function updateCurrentScene(sceneId) {
 function handleVideoError(event) {
   console.error('Video error:', event.target.error)
   console.error('Failed to load video:', currentVideoUrl.value)
+}
+
+function handleImageError(event) {
+  console.error('Image error:', event.target.error)
+  console.error('Failed to load image:', currentImageUrl.value)
 }
 
 function handleGridVideoError(index) {
@@ -451,10 +456,13 @@ function showVideoScene(hotspot) {
   if (!videoScene) return
 
   // Push current state if nested
-  if (isRtspMode.value || currentVideoUrl.value || isGridMode.value || isThumbnailMode.value || singleIframeUrl.value || isSwiperMode.value) {
+  if (isRtspMode.value || currentVideoUrl.value || currentImageUrl.value || isGridMode.value || isThumbnailMode.value || singleIframeUrl.value || isSwiperMode.value) {
     let currentState = {}
     if (isRtspMode.value) {
       currentState = { type: 'rtsp', data: { hotspot: currentRtspHotspot.value, stream_hotspot: stream_hotspot.value } }
+    }
+    else if (currentImageUrl.value) {
+      currentState = { type: 'image', data: { url: currentImageUrl.value } }
     } else if (currentVideoUrl.value) {
       currentState = { type: 'video', data: { url: currentVideoUrl.value } }
     } else if (isGridMode.value) {
@@ -478,6 +486,16 @@ function showVideoScene(hotspot) {
     isSwiperMode.value = true
     swiperVideos.value = hotspot.videos || []
     console.log('Swiper mode activated with videos:', swiperVideos.value)
+  }
+
+  // check nếu là file ảnh thì sẽ là đuôi như dưới đây
+  const isImageFile = hotspot.action === 'image' ||
+    hotspot.videoType === 'image' ||
+    /\.(png|jpg|jpeg|gif|webp|svg)$/i.test(hotspot.rtspUrl || hotspot.videoUrl || '')
+
+  if (isImageFile) {
+    currentImageUrl.value = hotspot.rtspUrl || hotspot.videoUrl || hotspot.imageUrl || ''
+    console.log('Image mode activated with URL:', currentImageUrl.value)
   }
 
   // Set new state based on hotspot
@@ -523,6 +541,7 @@ function resetVideoStates() {
   isRtspMode.value = false
   currentRtspHotspot.value = null
   currentVideoUrl.value = ''
+  currentImageUrl.value = ''
   isGridMode.value = false
   gridUrls.value = []
   gridType.value = 'video'
@@ -581,7 +600,11 @@ function closeVideo() {
         stream_hotspot.value = prevState.data.stream_hotspot || []
         isRtspMode.value = true
         currentRtspHotspot.value = prevState.data.hotspot
-      } else if (prevState.type === 'video') {
+      }
+      else if (prevState.type === 'image') {
+        currentImageUrl.value = prevState.data.url
+      }
+      else if (prevState.type === 'video') {
         currentVideoUrl.value = prevState.data.url
       } else if (prevState.type === 'grid') {
         isGridMode.value = true
@@ -655,6 +678,9 @@ const handleHotspotClickFromStream = (hotspot) => {
       streetViewTransition(hotspot.targetScene, hotspot);
     }, 300); // Đợi video scene đóng hoàn toàn
 
+  } else if (hotspot.action === 'image') {  // ← THÊM PHẦN NÀY
+    console.log('Image hotspot clicked from stream');
+    showVideoScene(hotspot);
   } else if (hotspot.action === 'video') {
     console.log('Video hotspot clicked from stream');
     showVideoScene(hotspot);
@@ -662,15 +688,15 @@ const handleHotspotClickFromStream = (hotspot) => {
   } else if (hotspot.action === 'grid') {
     console.log('Grid hotspot clicked from stream');
     showVideoScene(hotspot);
-    
+
   } else if (hotspot.action === 'swiper') {
     console.log('Swiper hotspot clicked from stream');
     showVideoScene(hotspot);
-    
+
   } else if (hotspot.action === 'thumbnail') {
     console.log('Thumbnail hotspot clicked from stream');
     showVideoScene(hotspot);
-    
+
   } else {
     console.log('Unknown hotspot action from stream:', hotspot);
   }
@@ -1079,5 +1105,96 @@ function handleThumbnailError(index) {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   backdrop-filter: blur(10px);
   box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+}
+
+.image-viewer {
+  width: 75%;
+  height: auto;
+  box-shadow: 0 10px 60px rgba(0, 0, 0, 0.5);
+}
+
+.image-hotspot {
+  width: 60px;
+  height: 40px;
+  background: rgba(0, 132, 255, 0.185); /* nền trắng mờ */
+  backdrop-filter: blur(6px); /* blur */
+  border: 2px solid rgba(0, 162, 255, 0.4);
+  border-radius: 6px;
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff; /* font trắng */
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 2px 6px rgba(0, 140, 255, 0.25);
+  cursor: pointer;
+}
+
+/* Chân màn hình */
+.image-hotspot::after {
+  content: "";
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 28px;
+  height: 6px;
+  background: rgba(0, 132, 255, 0.473);
+  border-radius: 3px;
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(0, 102, 255, 0.4);
+}
+
+/* Icon hiển thị ở giữa màn hình */
+.image-hotspot::before {
+  content: "▶";
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+/* Hover effect */
+.image-hotspot:hover {
+  transform: scale(1.1);
+  background: rgba(0, 132, 255, 0.473);
+}
+
+.live-badge {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: rgba(220, 38, 38, 0.9);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 0.5px;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  user-select: none;
+}
+
+.live-dot {
+  width: 8px;
+  height: 8px;
+  background: white;
+  border-radius: 50%;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(0.8);
+  }
 }
 </style>

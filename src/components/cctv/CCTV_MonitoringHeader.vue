@@ -6,7 +6,7 @@
       <button
         @click="emit('toggle-sidebar')"
         title="Toggle Sidebar"
-        class="mr-4 text-gray-400 hover:text-white focus:outline-none rounded-full p-2 hover:bg-white/10 transition"
+        class="mr-4 text-gray-400 hover:text-white focus:outline-none rounded-full p-2 hover:bg-white/10 transition cursor-pointer"
       >
         <i class="pi pi-bars text-xl"></i>
       </button>
