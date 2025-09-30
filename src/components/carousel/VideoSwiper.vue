@@ -10,7 +10,7 @@
                         :hotspots="videoData.hotSpots || []" @hotspotclicked="handleHotspotClick" />
 
                     <!-- Regular video -->
-                    <video v-else :id="'swiperVideo' + index" class="video-player" controls autoplay
+                    <video v-else :id="'swiperVideo' + index" class="video-player" controls autoplay muted
                         :src="videoData.videoUrl || videoData.rtspUrl" @error="handleVideoError">
                         Your browser does not support the video tag.
                     </video>

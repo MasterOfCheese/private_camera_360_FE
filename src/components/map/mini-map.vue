@@ -269,7 +269,7 @@ async function loadSceneMarkers() {
       const firstSceneKey = Object.keys(data.scenes)[0]
       if (firstSceneKey && typeof data.scenes[firstSceneKey] === 'object' && !data.scenes[firstSceneKey].x) {
         // Cấu trúc floors (scenes.floor1.scene001, scenes.floor3.scene002...)
-        console.log('Loading scenes with floor structure')
+        // console.log('Loading scenes with floor structure')
         mapsConfig.value = data
 
         // Flatten scenes để tương thích với code cũ
@@ -289,7 +289,7 @@ async function loadSceneMarkers() {
       const firstMapId = Object.keys(data.maps)[0]
       if (firstMapId) {
         currentMapId.value = firstMapId
-        console.log('Set default map to:', firstMapId)
+        // console.log('Set default map to:', firstMapId)
       }
     } else {
       // Cấu trúc cũ hoàn toàn - tạo map mặc định
@@ -310,7 +310,7 @@ async function loadSceneMarkers() {
       currentMapId.value = 'map1'
     }
 
-    console.log('Scene markers loaded successfully:', mapsConfig.value)
+    // console.log('Scene markers loaded successfully:', mapsConfig.value)
   } catch (error) {
     console.error('Error loading scene markers:', error)
     // Fallback configuration

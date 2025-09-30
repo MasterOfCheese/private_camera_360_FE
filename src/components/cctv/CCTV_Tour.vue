@@ -125,7 +125,7 @@ let scenesConfig = null
 let firstLoad = false
 const rtsp_url = ref('')
 const stream_hotspot = ref([])
-const videoStack = ref([]);
+const videoStack = ref([])
 
 // Video state
 const currentVideoUrl = ref('')
@@ -179,7 +179,7 @@ function updateCurrentScene(sceneId) {
     miniMapRef.value.updateCurrentMap(sceneId)
   }
 
-  console.log('Updated current scene to:', sceneId, 'Visited:', visitedScenes.value)
+  // console.log('Updated current scene to:', sceneId, 'Visited:', visitedScenes.value)
 }
 
 // Video error handlers
@@ -218,7 +218,7 @@ async function loadConfiguration() {
     }
 
     scenesConfig = await response.json()
-    console.log('Configuration loaded successfully:', scenesConfig)
+    // console.log('Configuration loaded successfully:', scenesConfig)
 
     // Process the panorama URLs to use full paths
     for (const sceneId in scenesConfig.scenes) {
@@ -322,7 +322,7 @@ async function initializePanorama() {
     }
 
     viewer = window.pannellum.viewer('panorama', config)
-    console.log('Pannellum viewer created:', viewer)
+    // console.log('Pannellum viewer created:', viewer)
 
     viewer.on('scenechange', (scene_id) => {
       console.log('Scene changed to:', scene_id)
@@ -354,7 +354,7 @@ async function initializePanorama() {
             Copyright © 2025 AI Department.
           </a>
         `
-        console.log('Pannellum credit updated successfully.')
+        // console.log('Pannellum credit updated successfully.')
       } else {
         if (updatePannellumCredit.attempts < 20) {
           updatePannellumCredit.attempts++
@@ -646,7 +646,7 @@ onMounted(async () => {
     attempts++
 
     if (typeof window.pannellum !== 'undefined') {
-      console.log('Pannellum found!')
+      // console.log('Pannellum found!')
       pannellumLoaded.value = true
       loadConfiguration()
     } else if (attempts < maxAttempts) {
@@ -897,7 +897,7 @@ function handleThumbnailError(index) {
 }
 
 .video-player {
-  width: 100%;
+  width: 75%;
   height: auto;
   border-radius: 8px;
   box-shadow: 0 4px 40px rgba(0, 0, 0, 0.5);
@@ -1164,7 +1164,7 @@ function handleThumbnailError(index) {
   position: absolute;
   top: 20px;
   left: 20px;
-  background: rgba(220, 38, 38, 0.9);
+  background: rgb(220 38 38 / 60%);
   color: white;
   padding: 8px 16px;
   border-radius: 6px;

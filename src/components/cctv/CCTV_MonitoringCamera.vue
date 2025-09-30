@@ -1122,7 +1122,7 @@ onMounted(async () => {
     // console.log(`Initializing grid with size ${initialSize} after fetching cameras.`)
     initializeGrid(initialSize, allCameras.value) // Call store action directly
     
-    enableAlarms.value = localStorage.getItem('enableAlarms') !== 'false' // Load from localStorage
+    enableAlarms.value = localStorage.getItem('enableAlarms') === 'true' // Load from localStorage
 
     // 5. Start timestamp updates
     updateLiveTimestamp()
