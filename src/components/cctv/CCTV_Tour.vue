@@ -13,8 +13,12 @@
     </div>
 
     <!-- Mini Map Component -->
-    <MiniMap :current-scene-id="currentSceneId" :visited-scenes="visitedScenes" :scenes-config="scenesConfig"
-      @jump-to-scene="handleJumpToScene" ref="miniMapRef" />
+    <MiniMap
+    :current-scene-id="currentSceneId"
+    :visited-scenes="visitedScenes"
+    :scenes-config="scenesConfig"
+    :class="{ 'minimap-hidden' : isRtspMode || (currentImageUrl && !isGridMode && !isThumbnailMode && !singleIframeUrl && !isSwiperMode)}"
+    @jump-to-scene="handleJumpToScene" ref="miniMapRef" />
 
     <!-- Panorama viewer -->
     <div id="panorama" class="panorama-container"></div>
@@ -55,7 +59,7 @@
       <!-- Video element -->
       <video
         v-else-if="currentVideoUrl && !currentImageUrl && !isGridMode && !isThumbnailMode && !singleIframeUrl && !isSwiperMode"
-        id="videoPlayer" class="video-player" controls autoplay :src="currentVideoUrl" @error="handleVideoError">
+        id="videoPlayer" class="video-player" controls autoplay muted :src="currentVideoUrl" @error="handleVideoError">
         Your browser does not support the video tag.
       </video>
 
@@ -859,9 +863,9 @@ function handleThumbnailError(index) {
 
 .video-back {
   position: absolute;
-  top: 30px;
+  top: 20px;
   right: 30px;
-  padding: 12px 20px;
+  padding: 8px 16px;
   background: linear-gradient(135deg, rgba(33, 150, 243, 0.9), rgba(21, 101, 192, 0.9));
   color: white;
   border-radius: 25px;
@@ -1164,7 +1168,7 @@ function handleThumbnailError(index) {
   position: absolute;
   top: 20px;
   left: 20px;
-  background: rgb(220 38 38 / 60%);
+  background: rgb(220 38 38);
   color: white;
   padding: 8px 16px;
   border-radius: 6px;

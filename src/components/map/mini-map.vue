@@ -563,4 +563,10 @@ onMounted(async () => {
     opacity: 1;
   }
 }
+
+.minimap-hidden :deep(.minimap-container) {
+  z-index: -1 !important;
+  pointer-events: none;
+  opacity: 0;
+}
 </style>
