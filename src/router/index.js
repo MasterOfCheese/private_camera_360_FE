@@ -1,3 +1,4 @@
+// router/index.js
 import { createRouter, createWebHashHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore.js'
 import MainLayout from '@/layouts/MainLayout.vue'
@@ -26,26 +27,34 @@ const router = createRouter({
       component: LoginLayout,
       children: [{ path: '', component: () => import('@/views/LoginView.vue') }],
     },
+    // ✅ New: OAuth Callback Route
+    {
+      path: '/auth',
+      component: () => import('@/views/OAuthCallback.vue'),
+      meta: { skipAuth: true } // Skip auth check for this route
+    },
     NotFoundRoute,
   ],
 })
 
 router.beforeEach((to) => {
   const auth = useAuthStore()
-
-  // Handle OAuth callback
-  if (to.query.auth_token && to.query.username) {
-    auth.completeOauthLogin(to.query.username, to.query.auth_token)
-    return { path: to.path === '/login' ? '/' : to.path, query: {} }
+  const isLoggedIn = !!auth.user
+  
+  // Skip auth check for OAuth callback route
+  if (to.meta?.skipAuth) {
+    return true
   }
 
-  const isLoggedIn = !!auth.user
   const authRequired = to.path !== '/login'
 
-  if (to.path === '/login' && isLoggedIn) return '/'
+  if (to.path === '/login' && isLoggedIn) {
+    return '/'
+  }
+
   if (authRequired && !isLoggedIn) {
     auth.returnUrl = to.fullPath
-    return '/login'
+    return { path: '/login', query: { returnUrl: to.fullPath } }
   }
 })
 

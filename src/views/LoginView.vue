@@ -1,3 +1,4 @@
+<!-- LoginView.vue -->
 <template>
     <div
         class="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-800 text-gray-200 flex items-center justify-center p-4">
@@ -81,10 +82,11 @@
                     </div>
                 </form>
 
-                <!-- New: GitHub Button -->
-                <div class="mt-6 pt-6 border-t border-white/10">
+                <!-- OAuth Buttons -->
+                <div class="mt-6 pt-6 border-t border-white/10 space-y-3">
+                    <!-- GitHub Login -->
                     <button
-                        @click="handleGithubLogin"
+                        @click="handleOAuthLogin('github')"
                         class="w-full flex items-center justify-center py-3 px-4 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-semibold transition duration-200 ease-in-out shadow-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:ring-offset-gray-800 cursor-pointer"
                         :disabled="isLoading">
                         <svg class="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
@@ -92,6 +94,18 @@
                         </svg>
                         Login with GitHub
                     </button>
+
+                    <!-- Internal SSO Login (Example) -->
+                    <!-- Uncomment khi cần -->
+                    <!-- <button
+                        @click="handleOAuthLogin('internal_sso')"
+                        class="w-full flex items-center justify-center py-3 px-4 bg-indigo-700 hover:bg-indigo-600 text-white rounded-lg font-semibold transition duration-200 ease-in-out shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-800 cursor-pointer"
+                        :disabled="isLoading">
+                        <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"/>
+                        </svg>
+                        Login with Internal SSO
+                    </button> -->
                 </div>
             </div>
         </div>
@@ -101,10 +115,11 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
-import { useRoute } from 'vue-router'  // New: Để lấy query returnUrl
+import { useRoute, useRouter } from 'vue-router'
 
 const authStore = useAuthStore()
 const route = useRoute()
+const router = useRouter()
 
 const username = ref('')
 const password = ref('')
@@ -113,40 +128,95 @@ const error = ref(null)
 const isPasswordVisible = ref(false)
 
 const baseUrl = window.appConfig.apiUrl
-const feBaseUrl = window.location.origin
 
-// New: Set returnUrl từ query nếu có (từ router guard)
-onMounted(() => {
+// OAuth Provider Configurations
+const OAUTH_CONFIGS = {
+  github: {
+    clientId: 'Ov23lipbkAa7YQYhp0eX',  // Hoặc lấy từ env
+    authUrl: 'https://github.com/login/oauth/authorize',
+    redirectUri: `${window.location.origin}${window.location.pathname}#/auth`,
+    scope: 'user'
+  },
+  internal_sso: {
+    clientId: 'YOUR_INTERNAL_SSO_CLIENT_ID',
+    authUrl: 'http://sso.internal.com/oauth/authorize',
+    redirectUri: `${window.location.origin}${window.location.pathname}#/auth`,
+    scope: 'profile email'
+  }
+}
+
+onMounted(async () => {
+  // Set returnUrl từ query nếu có
   if (route.query.returnUrl) {
     authStore.setReturnUrl(route.query.returnUrl)
   }
 })
 
 const togglePasswordVisibility = () => {
-    isPasswordVisible.value = !isPasswordVisible.value
+  isPasswordVisible.value = !isPasswordVisible.value
 }
 
 const handleLogin = async () => {
-    if (isLoading.value) return
+  if (isLoading.value) return
+  isLoading.value = true
+  error.value = null
 
-    isLoading.value = true
-    error.value = null
-
-    try {
-        await authStore.login(username.value, password.value)
-    } catch (err) {
-        console.error('Login failed:', err)
-        error.value = err.message || 'Login failed. Please check your username and password.'
-    } finally {
-        isLoading.value = false
-    }
+  try {
+    await authStore.login(username.value, password.value)
+  } catch (err) {
+    console.error('Login failed:', err)
+    error.value = err.message || 'Login failed. Please check your credentials.'
+  } finally {
+    isLoading.value = false
+  }
 }
 
-// Fix: Full FE URL cho return_to (origin + path, hash nếu cần)
-const handleGithubLogin = () => {
-  const returnPath = authStore.returnUrl || '/'
-  const hashPath = returnPath === '/' ? '/#/' : `/#/${returnPath.replace(/^\/+/, '')}`
-  const fullReturnTo = `${feBaseUrl}${hashPath}`
-  window.location.href = `${baseUrl}/v1/auth/github?return_to=${encodeURIComponent(fullReturnTo)}`
+const handleOAuthLogin = (provider) => {
+  if (isLoading.value) return
+  
+  const config = OAUTH_CONFIGS[provider]
+  if (!config) {
+    error.value = `Unsupported OAuth provider: ${provider}`
+    return
+  }
+
+  try {
+    // 1. Generate random state
+    const state = generateRandomState()
+    
+    // 2. Save state và provider vào sessionStorage
+    sessionStorage.setItem('oauth_state', state)
+    sessionStorage.setItem('oauth_provider', provider)
+    
+    // 3. Save returnUrl
+    if (authStore.returnUrl) {
+      sessionStorage.setItem('oauth_return_url', authStore.returnUrl)
+    }
+    
+    // 4. Build authorization URL
+    const params = new URLSearchParams({
+      client_id: config.clientId,
+      redirect_uri: config.redirectUri,
+      scope: config.scope,
+      state: state,
+      response_type: 'code'
+    })
+    
+    const authUrl = `${config.authUrl}?${params.toString()}`
+    
+    // 5. Redirect to OAuth provider
+    window.location.href = authUrl
+    
+  } catch (err) {
+    console.error(`${provider} login failed:`, err)
+    error.value = `Failed to initiate ${provider} login`
+  }
+}
+
+// Utility function to generate random state
+function generateRandomState() {
+  const array = new Uint8Array(16)
+  crypto.getRandomValues(array)
+  return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('')
 }
 </script>

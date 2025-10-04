@@ -1,3 +1,4 @@
+// authStore.js
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import { fetchWrapper } from '@/helper'
@@ -25,7 +26,7 @@ export const useAuthStore = defineStore('auth', () => {
       username,
       password,
     })
-    setUser(userData.user, userData.access_token)
+    setUser(userData.username, userData.access_token)
     router.push(returnUrl.value || '/')
   }
 
