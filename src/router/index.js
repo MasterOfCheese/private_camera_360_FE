@@ -9,70 +9,44 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      name: 'home',
       component: MainLayout,
       children: [
-        {
-          path: '',
-          name: 'dashboard',
-          component: () => import('@/components/cctv/CCTV_MonitoringCamera.vue'),
-        },
-        {
-          path: '/settings',
-          name: 'camera',
-          component: () => import('@/views/CameraSettings.vue'),
-        },
+        { path: '', component: () => import('@/components/cctv/CCTV_MonitoringCamera.vue') },
+        { path: '/settings', component: () => import('@/views/CameraSettings.vue') },
         {
           path: '/notifications',
-          name: 'notifications',
           component: () => import('@/components/cctv/CCTV_MonitoringEventLogTable.vue'),
         },
-        {
-          path: '/tour',
-          name: 'tour',
-          component: () => import('@/components/cctv/CCTV_Tour.vue'),
-        },
-        {
-          path: '/analytics',
-          name: 'analytics',
-          component: () => import('@/components/Analytics/Analytics.vue'),
-        },
+        { path: '/tour', component: () => import('@/components/cctv/CCTV_Tour.vue') },
+        { path: '/analytics', component: () => import('@/components/Analytics/Analytics.vue') },
       ],
     },
     {
       path: '/login',
-      name: 'login',
       component: LoginLayout,
-      children: [
-        {
-          path: '',
-          name: 'login-view',
-          component: () => import('@/views/LoginView.vue'),
-        },
-      ],
+      children: [{ path: '', component: () => import('@/views/LoginView.vue') }],
     },
     NotFoundRoute,
   ],
 })
-router.beforeEach(async (to, from) => {
-  const publicPages = ['/login']
-  const auth = useAuthStore()
-  const authRequired = !publicPages.includes(to.path)
-  const isLoggedIn = !!auth.user
 
-  // ✅ Nếu đang cố vào /login mà đã đăng nhập → redirect về home
-  if (to.path === '/login' && isLoggedIn) {
-    return '/'
+router.beforeEach((to) => {
+  const auth = useAuthStore()
+
+  // Handle OAuth callback
+  if (to.query.auth_token && to.query.username) {
+    auth.completeOauthLogin(to.query.username, to.query.auth_token)
+    return { path: to.path === '/login' ? '/' : to.path, query: {} }
   }
 
-  // ✅ Nếu cần đăng nhập mà chưa có user → redirect về login
+  const isLoggedIn = !!auth.user
+  const authRequired = to.path !== '/login'
+
+  if (to.path === '/login' && isLoggedIn) return '/'
   if (authRequired && !isLoggedIn) {
     auth.returnUrl = to.fullPath
     return '/login'
   }
-
-  // ✅ Cho phép tiếp tục điều hướng
-  return true
 })
 
 export default router

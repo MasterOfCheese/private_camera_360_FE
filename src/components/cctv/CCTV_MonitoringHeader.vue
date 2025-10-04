@@ -3,27 +3,20 @@
   <header
     class="bg-gray-800/60 backdrop-blur-xl border-b border-white/10 h-16 px-6 flex items-center justify-between text-gray-200 flex-shrink-0 shadow-lg">
     <div class="flex items-center">
-      <button
-        @click="emit('toggle-sidebar')"
-        title="Toggle Sidebar"
-        class="mr-4 text-gray-400 hover:text-white focus:outline-none rounded-full p-2 hover:bg-white/10 transition cursor-pointer"
-      >
+      <button @click="emit('toggle-sidebar')" title="Toggle Sidebar"
+        class="mr-4 text-gray-400 hover:text-white focus:outline-none rounded-full p-2 hover:bg-white/10 transition cursor-pointer">
         <i class="pi pi-bars text-xl"></i>
       </button>
       <div class="flex items-center mr-6">
-        <!-- <i class="pi pi-video text-accent mr-4 text-blue-400" style="font-size: 23px;"></i> -->
         <p class="text-white text-2xl font-bold tracking-tight flex">
-          <!-- <span class="text-white mr-2">CPEG-AI</span> -->
           <img src="/img/logo.e3ac0faa-white.svg" alt="Foxconn Industrial Internet" class="h-10 mr-2" />
           <span class="text-blue-200">{{ $t('FAISmart_Security') }}</span>
         </p>
       </div>
-
     </div>
 
     <div class="flex items-center gap-5">
       <div class="text-gray-300 text-md flex items-center">
-        <!-- ToggleButton here -->
         <div class="text-right mr-3 tabular-nums">{{ currentDate }}</div>
         <div class="text-xl font-semibold text-gray-100 tabular-nums">{{ currentTime }}</div>
       </div>
@@ -34,15 +27,54 @@
           class="md:w-24" style="background-color: rgba(31, 41, 55, 0.6);" @change="changeLanguage" />
       </div>
 
-      
+      <!-- Enhanced User Profile Section -->
+      <div 
+        @click="toggleMenu" 
+        ref="buttonRef"
+        class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-700/50 hover:bg-gray-700/70 border border-white/10 hover:border-blue-400/50 transition-all cursor-pointer group"
+        style="user-select: none;">
+        
+        <!-- Avatar with status indicator -->
+        <div class="relative">
+          <div class="w-7 h-7 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center border-2 border-blue-400/30 group-hover:border-blue-400/60 transition shadow-lg">
+            <i class="pi pi-user text-white text-smaller"></i>
+          </div>
+          <span class="absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full ring-2 ring-gray-800 bg-green-400"></span>
+        </div>
 
-      <!-- <button title="Notifications"
-        class="relative text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-blue-500 rounded-full p-1 hover:bg-white/10 transition">
-        <i class="pi pi-bell text-xl"></i>
-        <span class="absolute top-0 right-0 block h-2 w-2 rounded-full ring-2 ring-gray-800 bg-red-500"></span>
-      </button> -->
-      
-      
+        <!-- User info -->
+        <div class="flex flex-col items-start">
+          <span class="text-gray-200 font-semibold text-sm group-hover:text-white transition leading-tight">
+            {{ authStore.user ? authStore.user.username : 'Guest' }}
+          </span>
+        </div>
+
+        <!-- Dropdown indicator -->
+        <i class="pi pi-angle-down text-gray-400 group-hover:text-white transition text-xs ml-1"></i>
+      </div>
+
+      <!-- Dropdown menu -->
+      <OverlayPanel ref="op" :dismissable="true" style="min-width: 12rem">
+        <div class="px-4 py-3 text-sm text-gray-900 dark:text-white">
+          <div class="font-medium truncate">{{
+            authStore.user ? authStore.user.username : 'Guest'
+          }}</div>
+          <div>------------------------</div>
+        </div>
+        <ul class="py-2 text-sm text-gray-700 dark:text-gray-200">
+          <li v-for="item in menuItems" :key="item.label">
+            <a @click="item.command" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer">
+              {{ item.label }}
+            </a>
+          </li>
+        </ul>
+        <div class="py-2 border-t border-gray-200 dark:border-gray-600">
+          <a @click="logout"
+            class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white cursor-pointer">
+            {{ $t("Logout") }}
+          </a>
+        </div>
+      </OverlayPanel>
     </div>
   </header>
 </template>
@@ -50,7 +82,6 @@
 <script setup>
 import { ref, onMounted, computed, watch, defineEmits } from 'vue'
 import { useAuthStore } from '@/stores'
-// Removed PrimeVue Button import, using standard buttons now
 import 'primeicons/primeicons.css'
 import Select from 'primevue/select';
 import OverlayPanel from 'primevue/overlaypanel'
@@ -68,9 +99,6 @@ const user = ref({
 
 const menuItems = computed(() => [
   { label: t('profile'), command: () => alert(t('no_profile')) },
-  // { label: t('subscription'), command: () => alert(t('no_subscription')) },
-  // { label: t('team'), command: () => alert(t('no_team')) },
-  // { label: t('billing'), command: () => alert(t('no_billing')) }
 ])
 
 function toggleMenu(event) {
@@ -82,7 +110,6 @@ const logout = () => {
     authStore.logout();
   }
 };
-
 
 const authStore = useAuthStore()
 
@@ -113,7 +140,6 @@ const languages = ref([
   { name: 'VN', code: 'vi' },
   { name: 'ZH', code: 'zh' }
 ]);
-
 
 // Thay đổi ngôn ngữ khi người dùng chọn
 const changeLanguage = () => {
@@ -150,7 +176,6 @@ watch(() => locale.value, () => {
 </script>
 
 <style scoped>
-/* Add specific overrides if needed */
 .tabular-nums {
   font-variant-numeric: tabular-nums;
 }

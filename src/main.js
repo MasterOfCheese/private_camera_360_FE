@@ -11,6 +11,7 @@ import { createI18n } from 'vue-i18n';
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { faBell, faBellSlash } from '@fortawesome/free-solid-svg-icons'
+import vue3GoogleLogin from 'vue3-google-login'
 
 library.add(faBell, faBellSlash)
 
@@ -21,6 +22,8 @@ const i18n = createI18n({
   fallbackLocale: 'en',
   messages: {
     en: {
+      admin: "Admin",
+      guest: "Guest",
       FAISmart_Security: "Smart Security",
       Status: "Status",
       Visitors: "Visitors",
@@ -98,6 +101,8 @@ const i18n = createI18n({
       }
     },
     vi: {
+      admin: "Quản trị viên",
+      guest: "Khách",
       FAISmart_Security: "An ninh thông minh",
       Status: "Trạng thái",
       Visitors: "Khách ra vào",
@@ -172,6 +177,8 @@ const i18n = createI18n({
       }
     },
     zh: {
+      admin: "管理员",
+      guest: "访客",
       FAISmart_Security: "智能安防",
       Status:"状态",
       Visitors:"访客",
@@ -258,6 +265,9 @@ app.use(PrimeVue, {
 app.use(createPinia())
 app.use(router)
 app.use(i18n);
+app.use(vue3GoogleLogin, {
+  clientId: 'YOUR_GOOGLE_CLIENT_ID_HERE' // Thay bằng Client ID từ Google Console
+})
 
 app.component('font-awesome-icon', FontAwesomeIcon)
 
