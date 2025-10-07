@@ -1,39 +1,43 @@
 <!-- UserManagement.vue -->
 <template>
   <div>
+    <!-- Title -->
     <div
       v-if="error"
       class="bg-white/5 backdrop-blur-md rounded-lg border border-white/10 p-6 text-center"
     >
-    <h2 class="text-2xl font-semibold mb-4 text-blue-300">
-      {{ $t('userManagement.title') }}
-    </h2>
-    <p class="text-gray-400">
-      {{ $t('userManagement.description') }}
-    </p>
-      <!-- TODO: Add User list, add/edit/delete buttons, and potentially a modal -->
+      <h2 class="text-2xl font-semibold mb-4 text-blue-300">
+        {{ t('userManagement.title', 'User Management') }}
+      </h2>
+      <p class="text-gray-400">
+        {{ t('userManagement.description', 'Manage your application users here.') }}
+      </p>
     </div>
-    <!-- Add User Button -->
 
     <!-- Loading/Error State -->
-    <div v-if="isLoading" class="text-center py-10 text-gray-400">Loading users...</div>
+    <div v-if="isLoading" class="text-center py-10 text-gray-400">
+      {{ t('userManagement.loading', 'Loading users...') }}
+    </div>
+
     <div
       v-if="error"
       class="mb-4 text-center p-4 bg-red-900/30 text-red-300 border border-red-700 rounded-lg"
     >
       {{ getErrorMessage(error) }}
     </div>
+
+    <!-- User List -->
     <template v-if="!isLoading && !error">
       <div class="mb-6 text-right">
         <button
           @click="openAddModal"
           class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105"
         >
-          Add New User
+          {{ t('userManagement.add_user', 'Add New User') }}
         </button>
       </div>
-      <!-- User List -->
-      <div v-if="!isLoading && !error" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div
           v-for="user in users"
           :key="user.id"
@@ -47,29 +51,30 @@
 
             <div class="text-xs mb-4">
               <span
-                :class="[
+                :class="[ 
                   'font-bold px-2 py-1 rounded-full inline-block',
                   user.config ? 'bg-green-200 text-green-900' : 'bg-gray-300 text-gray-800',
                 ]"
               >
-                Config Access: {{ user.config ? 'Enabled' : 'Disabled' }}
+                {{ t('userManagement.config_access', 'Config Access') }}:
+                {{ user.config ? t('common.enabled', 'Enabled') : t('common.disabled', 'Disabled') }}
               </span>
             </div>
-            <!-- Note: Password hash is intentionally not displayed -->
           </div>
+
           <div class="p-5 border-t border-white/10 flex justify-end space-x-3 bg-white/5">
             <button
               @click="openEditModal(user)"
               class="text-sm bg-yellow-600 hover:bg-yellow-500 text-white font-semibold py-1 px-3 rounded-md transition duration-200"
             >
-              Edit
+              {{ t('common.edit', 'Edit') }}
             </button>
             <button
               @click="handleDeleteUser(user.id)"
               class="text-sm bg-red-600 hover:bg-red-500 text-white font-semibold py-1 px-3 rounded-md transition duration-200"
               :disabled="isDeleting === user.id"
             >
-              {{ isDeleting === user.id ? 'Deleting...' : 'Delete' }}
+              {{ isDeleting === user.id ? t('common.deleting', 'Deleting...') : t('common.delete', 'Delete') }}
             </button>
           </div>
         </div>
@@ -79,7 +84,7 @@
           v-if="!users || users.length === 0"
           class="col-span-full text-center py-10 bg-white/5 backdrop-blur-md rounded-lg border border-white/10"
         >
-          <p class="text-gray-400">{{ $t('userManagement.no_users') }}</p>
+          <p class="text-gray-400">{{ t('userManagement.no_users', 'No users found.') }}</p>
         </div>
       </div>
     </template>
@@ -98,24 +103,38 @@
 
 <script setup>
 import { ref, onMounted, defineAsyncComponent } from 'vue'
-import { fetchWrapper } from '@/helper' // Adjust path if needed
-// Assuming useAuthStore might be needed for permissions later, but not strictly for basic CRUD yet
-// import { useAuthStore } from '@/stores/authStore';
-import { useI18n } from 'vue-i18n';
+import { fetchWrapper } from '@/helper'
+import { useI18n } from 'vue-i18n'
 
-const { t } = useI18n()
+// const { t } = useI18n()
 
-const UserForm = defineAsyncComponent(() => import('./UserForm.vue')) // Adjust path if needed
+const { t: rawT, messages, locale } = useI18n()
+
+// ✅ Smart fallback t() – hoạt động giống $t trong template
+function t(key, ...args) {
+  const translated = rawT(key, ...args)
+  if (translated !== key) return translated // đã dịch được (string)
+
+  // fallback: tự resolve object từ messages (để đọc nested object)
+  const dict = messages.value[locale.value]
+  return key.split('.').reduce((obj, k) => obj?.[k], dict)
+}
+
+console.log('Current locale:', locale.value)
+console.log('Messages:', messages.value)
+console.log('Resolved:', t('userManagement.add_user'))
+
+
+const UserForm = defineAsyncComponent(() => import('./UserForm.vue'))
 
 const users = ref([])
 const isLoading = ref(false)
 const error = ref(null)
-const isDeleting = ref(null) // Track which user ID is being deleted
+const isDeleting = ref(null)
 
-// Modal State
 const isModalOpen = ref(false)
-const modalMode = ref('add') // 'add' or 'edit'
-const currentUser = ref(null) // User data for the form
+const modalMode = ref('add')
+const currentUser = ref(null)
 
 const getApiUrl = () => {
   const url = window.appConfig?.apiUrl
@@ -130,23 +149,22 @@ const getApiUrl = () => {
 // --- Error Message Handler ---
 const getErrorMessage = (err) => {
   if (!err) return ''
-  
-  // Handle structured error from fetch-wrapper
+
+  // Structured API errors
   if (err.code) {
     switch (err.code) {
       case 'FORBIDDEN':
-        return t('errors.forbidden')
+        return t('errors.forbidden', 'You do not have permission to perform this action.')
       case 'UNAUTHORIZED':
-        return t('errors.unauthorized')
+        return t('errors.unauthorized', 'Unauthorized access.')
       case 'UNKNOWN':
       default:
-        // For unknown errors, show the message with translated prefix
-        return `${t('errors.load_users')} ${err.message || t('errors.unknown')}`
+        return `${t('errors.load_users', 'Failed to load users:')} ${err.message || t('errors.unknown', 'Unknown error')}`
     }
   }
-  
-  // Handle simple string errors (fallback)
-  return typeof err === 'string' ? err : (err.message || t('errors.unknown'))
+
+  // Simple string errors
+  return typeof err === 'string' ? err : (err.message || t('errors.unknown', 'Unknown error'))
 }
 
 // --- Fetch Users ---
@@ -164,24 +182,23 @@ const fetchUsers = async () => {
     users.value = response
   } catch (err) {
     console.error('Failed to fetch users:', err)
-    error.value = err // Store the full error object
-    users.value = [] // Clear users on error
+    error.value = err
+    users.value = []
   } finally {
     isLoading.value = false
   }
 }
 
-// --- Modal Handling ---
+// --- Modal Logic ---
 const openAddModal = () => {
   modalMode.value = 'add'
-  currentUser.value = { username: '', password: '', config: false } // Default structure for add
+  currentUser.value = { username: '', password: '', config: false }
   isModalOpen.value = true
 }
 
 const openEditModal = (user) => {
   modalMode.value = 'edit'
-  // Clone user data, exclude password hash for the form
-  currentUser.value = { ...user, password: '' } // Password field in form is for *new* password
+  currentUser.value = { ...user, password: '' }
   isModalOpen.value = true
 }
 
@@ -190,46 +207,37 @@ const closeModal = () => {
   currentUser.value = null
 }
 
-// --- Save User (Triggered by UserForm's @save event) ---
 const handleSaveUser = async () => {
-  // The actual API call (POST/PATCH) is now handled within UserForm.
-  // We just need to close the modal and refresh the list.
-  console.log('User save operation completed by form, refreshing list...')
   closeModal()
-  await fetchUsers() // Fetch the updated list
+  await fetchUsers()
 }
 
 // --- Delete User ---
 const handleDeleteUser = async (userId) => {
-  if (!confirm(`Are you sure you want to delete user with ID ${userId}? This cannot be undone.`)) {
+  if (!confirm(`${t('userManagement.confirm_delete', 'Are you sure you want to delete this user? This cannot be undone.')}`)) {
     return
   }
 
   const apiUrl = getApiUrl()
-  if (!apiUrl) return // Error already handled by getApiUrl
+  if (!apiUrl) return
 
-  isDeleting.value = userId // Set loading state for the specific button
-  error.value = null // Clear previous errors
+  isDeleting.value = userId
+  error.value = null
 
   try {
     await fetchWrapper.delete(`${apiUrl}${userId}`)
-    console.log(`User ${userId} deleted successfully.`)
-    // Refresh list - could also filter locally for slightly faster UI update
     await fetchUsers()
-    // users.value = users.value.filter(u => u.id !== userId); // Alternative: local filter
   } catch (err) {
     console.error(`Failed to delete user ${userId}:`, err)
-    error.value = err // Store the full error object
+    error.value = err
   } finally {
-    isDeleting.value = null // Clear loading state
+    isDeleting.value = null
   }
 }
 
-// --- Lifecycle Hook ---
-onMounted(() => {
-  fetchUsers()
-})
+onMounted(fetchUsers)
 </script>
+
 
 <style scoped>
 /* Add specific styles if needed, but Tailwind classes should cover most */

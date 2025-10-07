@@ -1,3 +1,4 @@
+// main.js
 import './assets/main2.css'
 import 'primeicons/primeicons.css'
 
@@ -156,7 +157,10 @@ const i18n = createI18n({
       userManagement: {
         title: "Quản lý người dùng",
         description: "Chức năng thêm, sửa, xóa người dùng sẽ được triển khai tại đây.",
-        no_users: "Không tìm thấy người dùng nào. Hãy thêm mới!"
+        no_users: "Không tìm thấy người dùng nào. Hãy thêm mới!",
+        add_user: "Thêm Người Dùng Mới",
+        loading: "Đang tải danh sách người dùng...",
+        config_access: "Cấu hình quyền truy cập",
       },
       tagManagement: {
         ttitle: "Quản lý thẻ",
@@ -232,7 +236,10 @@ const i18n = createI18n({
     userManagement: {
       title: "用户管理",
       description: "这里将实现添加、编辑和删除用户的功能。",
-      no_users: "未找到用户，请新增！"
+      no_users: "未找到用户，请新增！",
+      add_user: "添加新用户",
+      loading: "正在加载用户...",
+      config_access: "配置访问权限",
     },
     tagManagement: {
       title: "标签管理",

@@ -32,20 +32,20 @@
           <div class="space-y-5 mb-6">
             <!-- Tag Name -->
             <div>
-              <label for="tag_name" class="block text-sm font-medium text-blue-300 mb-1"
-                >{{ $t('tagManagement.tag_name') }} *</label
-              >
+              <label for="tag_name" class="block text-sm font-medium text-blue-300 mb-1">
+                Tag Name *
+              </label>
               <input
                 type="text"
                 id="tag_name"
                 v-model.trim="formData.tag_name"
                 required
                 :disabled="isSubmitting"
-                :placeholder="$t('tagManagement.tag_name_placeholder')"
+                placeholder="Enter tag name"
                 class="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition disabled:opacity-70"
               />
               <p v-if="!formData.tag_name && formAttempted" class="text-xs text-red-400 mt-1">
-                {{ $t('tagManagement.tag_name_required') }}
+                Tag name is required.
               </p>
             </div>
           </div>
@@ -58,7 +58,7 @@
               :disabled="isSubmitting"
               class="py-2 px-5 bg-gray-600 hover:bg-gray-500 text-gray-200 rounded-lg font-medium transition duration-200 disabled:opacity-60"
             >
-              {{ $t('tagManagement.cancel') }}
+              Cancel
             </button>
             <button
               type="submit"
@@ -77,9 +77,6 @@
 <script setup>
 import { ref, watch, computed } from 'vue'
 import { fetchWrapper } from '@/helper'
-import { useI18n } from 'vue-i18n'
-
-const { t } = useI18n()
 
 const props = defineProps({
   show: Boolean,
@@ -93,7 +90,7 @@ const props = defineProps({
 const emit = defineEmits(['close', 'save', 'error'])
 
 // Form State
-const formData = ref({ tag_name: '' }) // Simplified form data
+const formData = ref({ tag_name: '' })
 const isSubmitting = ref(false)
 const submitError = ref(null)
 const formAttempted = ref(false)
@@ -106,9 +103,9 @@ watch(
       formAttempted.value = false
       submitError.value = null
       if (props.mode === 'edit' && props.tagData) {
-        formData.value = { ...props.tagData } // Clone existing tag data
+        formData.value = { ...props.tagData }
       } else {
-        formData.value = { tag_name: '' } // Reset for adding
+        formData.value = { tag_name: '' }
       }
     }
   },
@@ -116,36 +113,30 @@ watch(
 )
 
 // --- Computed Properties ---
-const formTitle = computed(() => 
-  props.mode === 'add' ? t('tagManagement.add_tag') : t('tagManagement.edit_tag')
-)
+const formTitle = computed(() => (props.mode === 'add' ? 'Add New Tag' : 'Edit Tag'))
 
 const saveButtonText = computed(() => {
   if (isSubmitting.value) {
-    return props.mode === 'add' ? t('tagManagement.adding') : t('tagManagement.saving')
+    return props.mode === 'add' ? 'Adding...' : 'Saving...'
   }
-  return props.mode === 'add' ? t('tagManagement.add_tag') : t('tagManagement.save_changes')
+  return props.mode === 'add' ? 'Add Tag' : 'Save Changes'
 })
 
 // --- Error Message Handler ---
 const getSubmitErrorMessage = (err) => {
   if (!err) return ''
-  
-  // Handle structured error from fetch-wrapper
   if (typeof err === 'object' && err.code) {
     switch (err.code) {
       case 'FORBIDDEN':
-        return t('errors.forbidden')
+        return 'You do not have permission to perform this action.'
       case 'UNAUTHORIZED':
-        return t('errors.unauthorized')
+        return 'Unauthorized access.'
       case 'UNKNOWN':
       default:
-        return err.message || t('errors.unknown')
+        return err.message || 'Unknown error occurred.'
     }
   }
-  
-  // Handle simple string errors (fallback)
-  return typeof err === 'string' ? err : (err.message || t('errors.unknown'))
+  return typeof err === 'string' ? err : (err.message || 'Unknown error.')
 }
 
 // --- API URL Helper ---
@@ -154,7 +145,7 @@ const getApiUrl = (tagId = null) => {
   if (!baseApiUrl) {
     throw new Error('API URL configuration is missing.')
   }
-  let url = `${baseApiUrl}/v1/tags/` // Tags endpoint
+  let url = `${baseApiUrl}/v1/tags/`
   if (tagId) {
     url += `${tagId}`
   }
@@ -173,18 +164,13 @@ const submitForm = async () => {
   formAttempted.value = true
   submitError.value = null
 
-  // Basic Validation
   if (!formData.value.tag_name) {
-    submitError.value = t('tagManagement.tag_name_required')
+    submitError.value = 'Tag name is required.'
     return
   }
 
   isSubmitting.value = true
-
-  // Prepare Payload (only tag_name)
-  const payload = {
-    tag_name: formData.value.tag_name,
-  }
+  const payload = { tag_name: formData.value.tag_name }
 
   try {
     let url
@@ -195,27 +181,24 @@ const submitForm = async () => {
       console.log('Submitting POST to:', url, 'Payload:', payload)
       responseData = await fetchWrapper.post(url, payload)
     } else {
-      // mode === 'edit'
       if (!formData.value.id) throw new Error('Tag ID is missing for update.')
       url = getApiUrl(formData.value.id)
-      // Use PATCH or PUT depending on your API for updates
-      console.log('Submitting PATCH/PUT to:', url, 'Payload:', payload)
-      // Assuming PATCH is suitable if only tag_name might change
-      responseData = await fetchWrapper.patch(url, payload) // Or .put
+      console.log('Submitting PATCH to:', url, 'Payload:', payload)
+      responseData = await fetchWrapper.patch(url, payload)
     }
 
     console.log('API Response:', responseData)
-    emit('save') // Signal success to parent
-    // emit('close'); // Parent handles closing on save
+    emit('save')
   } catch (error) {
     console.error('Failed to submit tag form:', error)
-    submitError.value = error // Store the full error object
+    submitError.value = error
     emit('error', error)
   } finally {
     isSubmitting.value = false
   }
 }
 </script>
+
 
 <style scoped>
 /* Custom scrollbar styles from CameraForm1 can be added here if needed */

@@ -6,12 +6,12 @@
         @click="openAddModal"
         class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105"
       >
-        {{ $t('tagManagement.add_tag') }}
+        {{ t('tagManagement.add_tag') }}
       </button>
     </div>
 
     <!-- Loading/Error State -->
-    <div v-if="isLoading" class="text-center py-10 text-gray-400">{{ $t('tagManagement.loading') }}</div>
+    <div v-if="isLoading" class="text-center py-10 text-gray-400">{{ t('tagManagement.loading') }}</div>
     <div
       v-if="error"
       class="mb-4 text-center p-4 bg-red-900/30 text-red-300 border border-red-700 rounded-lg"
@@ -43,7 +43,7 @@
           >
             <button
               @click="openEditModal(tag)"
-              :title="$t('Edit')"
+              :title="t('Edit')"
               class="text-xs bg-yellow-600 hover:bg-yellow-500 text-white font-semibold p-1.5 rounded-md transition duration-200"
             >
               <svg
@@ -63,7 +63,7 @@
 
             <button
               @click="handleDeleteTag(tag.id)"
-              :title="$t('delete')"
+              :title="t('delete')"
               class="text-xs bg-red-600 hover:bg-red-500 text-white font-semibold p-1.5 rounded-md transition duration-200"
               :disabled="isDeleting === tag.id"
             >
@@ -111,7 +111,7 @@
         v-if="!tags || tags.length === 0"
         class="col-span-full text-center py-10 bg-white/5 backdrop-blur-md rounded-lg border border-white/10"
       >
-        <p class="text-gray-400">{{ $t('tagManagement.no_tags') }}</p>
+        <p class="text-gray-400">{{ t('tagManagement.no_tags') }}</p>
       </div>
     </div>
 
@@ -132,19 +132,32 @@ import { ref, onMounted, defineAsyncComponent } from 'vue'
 import { fetchWrapper } from '@/helper'
 import { useI18n } from 'vue-i18n'
 
-const { t } = useI18n()
+// --- I18n Setup ---
+const { t: rawT, messages, locale } = useI18n()
 
+// ✅ Smart fallback t() – hoạt động giống $t trong template
+function t(key, ...args) {
+  const translated = rawT(key, ...args)
+  if (translated !== key) return translated // đã dịch được (string)
+
+  // fallback: tự resolve object từ messages
+  const dict = messages.value[locale.value]
+  return key.split('.').reduce((obj, k) => obj?.[k], dict)
+}
+
+// --- Async Components ---
 const TagForm = defineAsyncComponent(() => import('./TagForm.vue'))
 
+// --- Reactive State ---
 const tags = ref([])
 const isLoading = ref(false)
 const error = ref(null)
 const isDeleting = ref(null)
-
 const isModalOpen = ref(false)
 const modalMode = ref('add')
 const currentTag = ref(null)
 
+// --- Helpers ---
 const getApiUrl = () => {
   const url = window.appConfig?.apiUrl
   if (!url) {
@@ -158,8 +171,7 @@ const getApiUrl = () => {
 // --- Error Message Handler ---
 const getErrorMessage = (err) => {
   if (!err) return ''
-  
-  // Handle structured error from fetch-wrapper
+
   if (err.code) {
     switch (err.code) {
       case 'FORBIDDEN':
@@ -168,38 +180,51 @@ const getErrorMessage = (err) => {
         return t('errors.unauthorized')
       case 'UNKNOWN':
       default:
-        // For unknown errors, show the message with translated prefix
         return `${t('errors.load_tags')} ${err.message || t('errors.unknown')}`
     }
   }
-  
-  // Handle simple string errors (fallback)
+
   return typeof err === 'string' ? err : (err.message || t('errors.unknown'))
 }
 
+// --- CRUD Logic (giữ nguyên) ---
 const fetchTags = async () => {
+  const apiUrl = getApiUrl()
+  if (!apiUrl) return
+
   isLoading.value = true
   error.value = null
-  const apiUrl = getApiUrl()
-  if (!apiUrl) {
-    isLoading.value = false
-    return
-  }
   try {
-    const response = await fetchWrapper.get(apiUrl)
-    tags.value = response
+    const data = await fetchWrapper.get(apiUrl)
+    tags.value = Array.isArray(data) ? data : []
   } catch (err) {
     console.error('Failed to fetch tags:', err)
-    error.value = err // Store the full error object
-    tags.value = []
+    error.value = err
   } finally {
     isLoading.value = false
   }
 }
 
+const handleDeleteTag = async (id) => {
+  const apiUrl = getApiUrl()
+  if (!apiUrl) return
+
+  isDeleting.value = id
+  try {
+    await fetchWrapper.delete(`${apiUrl}${id}/`)
+    tags.value = tags.value.filter((t) => t.id !== id)
+  } catch (err) {
+    console.error('Failed to delete tag:', err)
+    error.value = err
+  } finally {
+    isDeleting.value = null
+  }
+}
+
+// --- Modal Logic ---
 const openAddModal = () => {
   modalMode.value = 'add'
-  currentTag.value = { tag_name: '' }
+  currentTag.value = null
   isModalOpen.value = true
 }
 
@@ -211,41 +236,14 @@ const openEditModal = (tag) => {
 
 const closeModal = () => {
   isModalOpen.value = false
-  currentTag.value = null
 }
 
 const handleSaveTag = async () => {
-  console.log('Tag save operation completed by form, refreshing list...')
-  closeModal()
   await fetchTags()
+  closeModal()
 }
 
-const handleDeleteTag = async (tagId) => {
-  const tagName = tags.value.find((t) => t.id === tagId)?.tag_name || tagId
-  if (!confirm(`${t('tagManagement.confirm_delete')} "${tagName}"? ${t('tagManagement.cannot_undo')}`)) {
-    return
-  }
-  const apiUrl = getApiUrl()
-  if (!apiUrl) return
-
-  isDeleting.value = tagId
-  error.value = null
-
-  try {
-    await fetchWrapper.delete(`${apiUrl}${tagId}`)
-    console.log(`Tag ${tagId} deleted successfully.`)
-    await fetchTags()
-  } catch (err) {
-    console.error(`Failed to delete tag ${tagId}:`, err)
-    error.value = err // Store the full error object
-  } finally {
-    isDeleting.value = null
-  }
-}
-
-onMounted(() => {
-  fetchTags()
-})
+onMounted(fetchTags)
 </script>
 
 <style scoped>

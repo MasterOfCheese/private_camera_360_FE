@@ -122,18 +122,23 @@ const handleOAuthCallback = async () => {
     sessionStorage.removeItem('oauth_state')
     sessionStorage.removeItem('oauth_provider')
     
-    // 7. Get return URL and redirect
+    // 7. Clean the URL (remove ?code=...&state=... before #)
+    const currentUrl = window.location.href
+    const [base, hash] = currentUrl.split('#')
+    if (base.includes('?')) {
+      const cleanBase = base.split('?')[0]
+      const newUrl = `${cleanBase}#${hash || ''}`
+      window.history.replaceState({}, '', newUrl)
+    }
+
+    // 8. Redirect user back to the original page
     const returnUrl = sessionStorage.getItem('oauth_return_url') || '/'
     sessionStorage.removeItem('oauth_return_url')
 
     // Small delay to show success state
     setTimeout(() => {
-    //   router.push(returnUrl)
-    // window.location.replace(returnUrl)
-    const cleanUrl = window.location.origin + window.location.hash
-    window.history.replaceState(null, '', cleanUrl);
-    router.push(returnUrl);
-    })
+      router.push(returnUrl)
+    }, 200)
 
   } catch (err) {
     console.error('OAuth callback failed:', err)
