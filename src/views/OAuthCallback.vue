@@ -56,9 +56,23 @@ onMounted(async () => {
 
 const handleOAuthCallback = async () => {
   try {
+    // ⚙️ STEP 0: Phát hiện và sửa URL sai dạng (/?code=...#/auth)
+    const currentUrl = window.location.href
+    if (currentUrl.includes('?code=') && currentUrl.includes('#/')) {
+      const searchParams = new URLSearchParams(window.location.search)
+      const code = searchParams.get('code')
+      const state = searchParams.get('state')
+
+      // Nếu có đủ 2 param, redirect sang URL đúng cấu trúc
+      if (code && state) {
+        const fixedUrl = `http://10.72.216.63:8005/v2/#/auth?code=${code}&state=${state}`
+        console.log('Redirecting to fixed OAuth URL:', fixedUrl)
+        window.location.replace(fixedUrl)
+        return // Dừng xử lý để chờ reload trang
+      }
+    }
+
     // 1. Get code and state from URL
-    // ⚠️ Fix: GitHub redirect về dạng: /?code=xxx&state=yyy#/auth
-    // Query params nằm TRƯỚC hash, nên phải dùng window.location.search
     let code = route.query.code
     let state = route.query.state
 
@@ -123,13 +137,8 @@ const handleOAuthCallback = async () => {
     sessionStorage.removeItem('oauth_provider')
     
     // 7. Clean the URL (remove ?code=...&state=... before #)
-    const currentUrl = window.location.href
-    const [base, hash] = currentUrl.split('#')
-    if (base.includes('?')) {
-      const cleanBase = base.split('?')[0]
-      const newUrl = `${cleanBase}#${hash || ''}`
-      window.history.replaceState({}, '', newUrl)
-    }
+    const cleanUrl = window.location.href.split('?')[0]
+    window.history.replaceState({}, '', cleanUrl)
 
     // 8. Redirect user back to the original page
     const returnUrl = sessionStorage.getItem('oauth_return_url') || '/'

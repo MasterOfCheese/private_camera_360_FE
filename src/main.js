@@ -12,7 +12,6 @@ import { createI18n } from 'vue-i18n';
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { faBell, faBellSlash } from '@fortawesome/free-solid-svg-icons'
-import vue3GoogleLogin from 'vue3-google-login'
 
 library.add(faBell, faBellSlash)
 
@@ -272,9 +271,6 @@ app.use(PrimeVue, {
 app.use(createPinia())
 app.use(router)
 app.use(i18n);
-app.use(vue3GoogleLogin, {
-  clientId: 'YOUR_GOOGLE_CLIENT_ID_HERE' // Thay bằng Client ID từ Google Console
-})
 
 app.component('font-awesome-icon', FontAwesomeIcon)
 
