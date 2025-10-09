@@ -89,7 +89,7 @@
                       @click="handleOAuthLogin('internal')"
                       class="w-full flex items-center justify-center py-3 px-4 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-semibold transition duration-200 ease-in-out shadow-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:ring-offset-gray-800 cursor-pointer"
                       :disabled="isLoading">
-                      Login with internal
+                      Login with Smart Office
                   </button>
 
                   <!-- Internal SSO Login (Example) -->

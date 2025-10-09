@@ -130,7 +130,7 @@ const handleOAuthCallback = async () => {
     const tokenData = await response.json()
 
     // 5. Complete login in auth store
-    authStore.completeOauthLogin(tokenData.username, tokenData.access_token)
+    authStore.completeOauthLogin(tokenData.username, tokenData.access_token, provider)
 
     // 6. Cleanup sessionStorage
     sessionStorage.removeItem('oauth_state')
