@@ -17,7 +17,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
           </svg>
           <p class="text-red-300 text-lg font-medium">Authentication Failed</p>
-          <p class="text-red-200 text-lg font-lg">Some config is wrong!</p>
+          <p class="text-red-200 text-lg font-lg">You do not have permission to perform this action!</p>
           <p class="text-gray-400 text-sm">{{ error }}</p>
           <button
             @click="redirectToLogin"

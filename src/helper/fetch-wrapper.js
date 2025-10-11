@@ -1,3 +1,4 @@
+// fetch-wrapper.js
 import { useAuthStore } from '@/stores'
 import { useI18n } from 'vue-i18n'
 
@@ -69,7 +70,8 @@ function handleResponse(response) {
 
       if (response.status === 401 && user) {
         console.log('Auto logout')
-        // logout()
+        const {logout} = useAuthStore()
+        logout()
         return Promise.reject({ 
           code: 'UNAUTHORIZED',
           status: 401,
