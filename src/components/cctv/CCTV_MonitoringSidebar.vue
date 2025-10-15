@@ -77,6 +77,26 @@
       </RouterLink>
 
       <RouterLink
+        to="/BBS"
+        :class="[
+          'transition-all duration-300 flex items-center px-2 py-2 text-sm',
+          route.path === '/BBS'
+            ? 'font-medium bg-gradient-to-r from-blue-700/50 to-transparent text-white border-l-4 border-blue-400'
+            : 'text-gray-300 rounded-md hover:bg-white/10 hover:text-white group transition-colors duration-150',
+        ]"
+      >
+        <i
+          class="pi pi-compass mr-2"
+          :class="
+            route.path === '/BBS'
+              ? 'text-base'
+              : 'text-gray-400 group-hover:text-blue-300 transition-colors duration-150 text-base'
+          "
+        ></i>
+        <span>{{ $t('BBS_tour') }}</span>
+      </RouterLink>
+
+      <RouterLink
         to="/notifications"
         :class="[
           'transition-all duration-300 flex items-center px-2 py-2 text-sm',

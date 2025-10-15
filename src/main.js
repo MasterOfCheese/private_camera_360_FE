@@ -12,6 +12,7 @@ import { createI18n } from 'vue-i18n';
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { faBell, faBellSlash } from '@fortawesome/free-solid-svg-icons'
+import BBS_tour from './components/line_tours/BBS_tour.vue'
 
 library.add(faBell, faBellSlash)
 
@@ -32,6 +33,7 @@ const i18n = createI18n({
       Resources: "Resources",
       LIVE_View: "LIVE View",
       Virtual_Tour: "Virtual Tour",
+      BBS_tour: "BBS Tour",
       Notifications: "Notifications",
       Settings: "Settings",
       Logout: "Logout",
@@ -111,6 +113,7 @@ const i18n = createI18n({
       Resources: "Tài nguyên",
       LIVE_View: "Xem trực tiếp",
       Virtual_Tour: "Giả lập tham quan",
+      BBS_tour: "Tham quan BBS",
       Notifications:"Thông báo",
       Settings:"Cấu hình",
       Logout:"Đăng xuất",
@@ -190,6 +193,7 @@ const i18n = createI18n({
       Resources:"资源",
       LIVE_View: "实时视图",
       Virtual_Tour: "虚拟导览",
+      BBS_tour: "BBS虚拟导",
       Notifications:"通知",
       Settings:"设置",
       Logout:"登出",
