@@ -1,8 +1,8 @@
+<!-- BBS_tour.vue -->
 <template>
   <div class="tour-wrapper relative">
     <!-- Video overlay -->
     <div id="videoScene" class="video-scene">
-
       <!-- WebRTC pano -->
       <webrtcStreamCard
         v-show="isRtspMode && currentRtspHotspot"
@@ -13,6 +13,11 @@
         :pano="1"
         :hotspots="stream_hotspot"
         @hotspotclicked="handleHotspotClickFromStream"
+        :initrotate="shouldAutoRotate"
+        @autorotatehotspotfinished="handleAutoRotateFinished"
+        @capture="handleCaptureFrame"
+        :capture="capture_signal"
+        ref="webrtcStreamRef"
       />
     </div>
 
@@ -24,7 +29,7 @@
 
     <!-- Sidebar Toggle Button -->
     <button 
-      class="sidebar-toggle-namdeptrai" 
+      class="sidebar-toggle" 
       @click="toggleSidebar"
       :class="{ 'sidebar-open': isSidebarOpen }"
     >
@@ -32,11 +37,10 @@
     </button>
 
     <!-- Mini Map Sidebar -->
-    <div class="map-sidebar" :class="{ 'sidebar-open': isSidebarOpen-namdeptrai }">
+    <div class="map-sidebar" :class="{ 'sidebar-open': isSidebarOpen }">
       <div class="sidebar-header">
         <h3>BBS Route Map</h3>
         
-        <!-- Bọc thẻ select trong một div container -->
         <div class="select-container">
           <select 
             v-model="selectedMapId" 
@@ -52,7 +56,6 @@
             </option>
           </select>
         </div>
-
       </div>
       <div class="sidebar-content">
         <MiniMap
@@ -64,6 +67,38 @@
         />
       </div>
     </div>
+
+    <!-- Control Buttons (Bottom Left) -->
+    <div class="absolute bottom-6 left-6 z-20 flex gap-3">
+      <!-- Start/Stop Button -->
+      <button 
+        @click="toggleAutoSequence"
+        class="px-6 py-2.5 cursor-pointer rounded-lg font-semibold text-white shadow-lg transition-all duration-300 flex items-center gap-2 hover:scale-105"
+        :class="isAutoSequenceRunning ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'"
+      >
+        {{ isAutoSequenceRunning ? 'Stop' : 'Start' }}
+      </button>
+
+      <!-- Capture Button -->
+      <button 
+        @click="handleCapture"
+        :disabled="!currentRtspHotspot"
+        class="px-6 py-2.5 cursor-pointer rounded-lg font-semibold text-white shadow-lg transition-all duration-300 flex items-center gap-2 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+        :class="currentRtspHotspot ? 'bg-blue-500 hover:bg-blue-700' : 'bg-gray-600'"
+      >
+        Capture
+      </button>
+    </div>
+
+    <!-- Capture Error Form -->
+    <CaptureErrorForm
+      :is-visible="showCaptureForm"
+      :captured-image="capture_frame"
+      :location="currentSceneLocation"
+      :owner="currentSceneOwner"
+      @close="closeCaptureForm"
+      @save="handleSaveCapture"
+    />
   </div>
 </template>
 
@@ -71,6 +106,7 @@
 import { onMounted, ref, watch } from 'vue'
 import webrtcStreamCard from '../stream/webrtcStreamCard.vue'
 import MiniMap from '../map/BBS_mini-map.vue'
+import CaptureErrorForm from './CaptureErrorForm.vue'
 
 // Reactive variables
 let scenesConfig = null
@@ -88,7 +124,7 @@ const currentSceneId = ref('scene001')
 const visitedScenes = ref([])
 
 // Sidebar state
-const isSidebarOpen = ref(true)
+const isSidebarOpen = ref(false)
 
 // Floor selector
 const selectedMapId = ref('map1')
@@ -96,6 +132,22 @@ const availableMaps = ref({})
 
 // Component refs
 const miniMapRef = ref(null)
+const webrtcStreamRef = ref(null)
+
+// Capture state
+const capture_signal = ref(false)
+const capture_frame = ref(null)
+const showCaptureForm = ref(false)
+
+// Auto sequence state
+const isAutoSequenceRunning = ref(false)
+const shouldAutoRotate = ref(false)
+const currentStreamIndex = ref(0)
+const allRtspStreams = ref([])
+
+// Current scene info for capture form
+const currentSceneLocation = ref('')
+const currentSceneOwner = ref('')
 
 // Toggle sidebar
 function toggleSidebar() {
@@ -115,20 +167,15 @@ function handleJumpToScene(sceneId) {
     console.log('Jumping to scene from minimap:', sceneId)
     updateCurrentScene(sceneId)
     
-    // Tìm và hiển thị stream/video tương ứng với scene
     const scene = scenesConfig.scenes[sceneId]
     if (scene) {
-      // Tìm hotspot có rtspUrl trong scene
-      const streamHotspot = scene.hotSpots?.find(h => 
-        h.rtspUrl
-      )
+      const streamHotspot = scene.hotSpots?.find(h => h.rtspUrl)
       
       if (streamHotspot) {
         console.log('Found stream hotspot for scene:', sceneId, streamHotspot)
-        showVideoScene(streamHotspot)
+        showVideoScene(streamHotspot, scene)
       } else {
         console.log('No stream hotspot found for scene:', sceneId)
-        // Nếu không có hotspot stream, reset về trạng thái rỗng
         resetVideoStates()
       }
     }
@@ -142,7 +189,6 @@ function updateCurrentScene(sceneId) {
     visitedScenes.value.push(sceneId)
   }
 
-  // Update mini-map
   if (miniMapRef.value) {
     miniMapRef.value.updateCurrentMap(sceneId)
   }
@@ -162,10 +208,11 @@ async function loadConfiguration() {
     scenesConfig = await response.json()
     console.log('Configuration loaded successfully:', scenesConfig)
 
-    // Load available maps từ scene markers
+    // Extract all RTSP streams from configuration
+    extractAllRtspStreams()
+
     await loadAvailableMaps()
 
-    // Sau khi load config, tự động hiển thị scene đầu tiên
     const firstScene = scenesConfig.default?.firstScene || 'scene001'
     handleJumpToScene(firstScene)
 
@@ -174,6 +221,30 @@ async function loadConfiguration() {
     console.error('Error loading configuration:', error)
     showLoading.value = false
   }
+}
+
+function extractAllRtspStreams() {
+  allRtspStreams.value = []
+  
+  if (!scenesConfig?.scenes) return
+
+  for (const [sceneId, scene] of Object.entries(scenesConfig.scenes)) {
+    if (scene.hotSpots) {
+      const rtspHotspots = scene.hotSpots.filter(h => 
+        h.rtspUrl && h.videoType === 'rtsp'
+      )
+      
+      rtspHotspots.forEach(hotspot => {
+        allRtspStreams.value.push({
+          sceneId,
+          hotspot,
+          scene
+        })
+      })
+    }
+  }
+  
+  console.log('Found RTSP streams:', allRtspStreams.value.length)
 }
 
 async function loadAvailableMaps() {
@@ -185,7 +256,6 @@ async function loadAvailableMaps() {
     
     if (data.maps) {
       availableMaps.value = data.maps
-      // Set default selected map
       if (!selectedMapId.value && Object.keys(data.maps).length > 0) {
         selectedMapId.value = Object.keys(data.maps)[0]
       }
@@ -195,14 +265,12 @@ async function loadAvailableMaps() {
   }
 }
 
-function showVideoScene(hotspot) {
+function showVideoScene(hotspot, scene) {
   const videoScene = document.getElementById('videoScene')
   if (!videoScene) return
 
-  // Reset tất cả states trước khi set state mới
   resetVideoStates()
 
-  // Set new state based on hotspot
   if (hotspot.videoType === 'rtsp' && hotspot.rtspUrl && !/\.[^/]+$/.test(hotspot.rtspUrl)) {
     rtsp_url.value = hotspot.rtspUrl + '/whep'
     if (hotspot.hotSpots?.length > 0) {
@@ -210,6 +278,11 @@ function showVideoScene(hotspot) {
     }
     isRtspMode.value = true
     currentRtspHotspot.value = hotspot
+    
+    // Update current scene info
+    currentSceneLocation.value = scene?.location || ''
+    currentSceneOwner.value = scene?.owner || ''
+    
     console.log('RTSP mode activated:', hotspot)
   }
 
@@ -223,13 +296,102 @@ function resetVideoStates() {
   isRtspMode.value = false
   currentRtspHotspot.value = null
   stream_hotspot.value = []
+  currentSceneLocation.value = ''
+  currentSceneOwner.value = ''
 }
 
-// Watch để cleanup resources khi chuyển scene
+// Auto sequence functions
+function toggleAutoSequence() {
+  if (isAutoSequenceRunning.value) {
+    stopAutoSequence()
+  } else {
+    startAutoSequence()
+  }
+}
+
+function startAutoSequence() {
+  if (allRtspStreams.value.length === 0) {
+    alert('No RTSP streams found in configuration')
+    return
+  }
+
+  isAutoSequenceRunning.value = true
+  currentStreamIndex.value = 0
+  playNextStream()
+}
+
+function stopAutoSequence() {
+  isAutoSequenceRunning.value = false
+  shouldAutoRotate.value = false
+  currentStreamIndex.value = 0
+}
+
+function playNextStream() {
+  if (!isAutoSequenceRunning.value) return
+  
+  if (currentStreamIndex.value >= allRtspStreams.value.length) {
+    // Loop back to start
+    currentStreamIndex.value = 0
+  }
+
+  const streamData = allRtspStreams.value[currentStreamIndex.value]
+  
+  // Update scene
+  updateCurrentScene(streamData.sceneId)
+  
+  // Show video scene with auto rotate enabled
+  shouldAutoRotate.value = true
+  showVideoScene(streamData.hotspot, streamData.scene)
+  
+  console.log(`Playing stream ${currentStreamIndex.value + 1}/${allRtspStreams.value.length}:`, streamData.sceneId)
+}
+
+function handleAutoRotateFinished() {
+  console.log('Auto rotate finished for current stream')
+  
+  if (!isAutoSequenceRunning.value) {
+    shouldAutoRotate.value = false
+    return
+  }
+
+  // Move to next stream
+  currentStreamIndex.value++
+  
+  // Add a small delay before next stream
+  setTimeout(() => {
+    playNextStream()
+  }, 1000)
+}
+
+// Capture functions
+function handleCapture() {
+  if (!currentRtspHotspot.value) {
+    alert('No stream active to capture')
+    return
+  }
+  
+  capture_signal.value = true
+}
+
+function handleCaptureFrame(frame) {
+  capture_frame.value = frame
+  capture_signal.value = false
+  showCaptureForm.value = true
+}
+
+function closeCaptureForm() {
+  showCaptureForm.value = false
+  capture_frame.value = null
+}
+
+function handleSaveCapture(result) {
+  console.log('Capture saved successfully:', result)
+  alert('Error report saved successfully!')
+}
+
 watch(isRtspMode, (newRtsp, oldRtsp) => {
-  // Cleanup RTSP cũ
   if (oldRtsp && !newRtsp) {
-    // Component sẽ tự unmount do v-show và key
+    // Component will auto unmount due to v-show and key
   }
 })
 
@@ -242,7 +404,7 @@ const handleHotspotClickFromStream = (hotspot) => {
 
   if (hotspot.rtspUrl) {
     console.log('RTSP hotspot clicked from stream')
-    showVideoScene(hotspot)
+    showVideoScene(hotspot, scenesConfig.scenes[currentSceneId.value])
   } else {
     console.log('Unknown hotspot action from stream:', hotspot)
   }
@@ -380,14 +542,13 @@ const handleHotspotClickFromStream = (hotspot) => {
   white-space: nowrap;
 }
 
-/* Thêm container để định vị mũi tên */
 .select-container {
   position: relative;
-  display: inline-block; /* Giúp container chỉ chiếm độ rộng cần thiết */
+  display: inline-block;
 }
 
 .floor-selector {
-  padding: 4px 8px; /* Giữ padding bên phải để có không gian cho mũi tên */
+  padding: 4px 8px;
   background: #578AE6;
   border: none;
   border-radius: 6px;
@@ -398,31 +559,28 @@ const handleHotspotClickFromStream = (hotspot) => {
   outline: none;
   transition: all 0.3s ease;
   min-width: 85px;
-  appearance: none; /* Bắt buộc phải có để ẩn mũi tên mặc định của trình duyệt */
+  appearance: none;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   letter-spacing: 0.3px;
 }
 
-/* Tạo mũi tên mới bằng pseudo-element ::after */
 .select-container::after {
   content: '';
   position: absolute;
   top: 50%;
-  right: 12px; /* Vị trí của mũi tên */
+  right: 12px;
   transform: translateY(-50%);
   width: 0;
   height: 0;
-  /* Tạo hình tam giác bằng border */
   border-left: 5px solid transparent;
   border-right: 5px solid transparent;
-  border-top: 6px solid white; /* Đây là phần sẽ hiển thị */
-  pointer-events: none; /* Cho phép click xuyên qua mũi tên để mở select box */
+  border-top: 6px solid white;
+  pointer-events: none;
   transition: all 0.3s ease;
 }
 
-/* (Tùy chọn) Thêm hiệu ứng xoay mũi tên khi select box được mở */
 .select-container:focus-within::after {
-    transform: translateY(-50%) rotate(180deg);
+  transform: translateY(-50%) rotate(180deg);
 }
 
 .floor-selector:hover {
@@ -465,9 +623,6 @@ const handleHotspotClickFromStream = (hotspot) => {
   background: rgba(33, 150, 243, 0.7);
 }
 
-</style>
-
-<style>
 /* Global styles for Pannellum hotspots */
 .pnlm-hotspot-base {
   cursor: pointer;

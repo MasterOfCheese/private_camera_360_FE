@@ -1,3 +1,4 @@
+<!-- BBS_mini-map.vue -->
 <template>
   <div class="minimap-wrapper">
     <!-- Minimap Container -->

@@ -1,3 +1,4 @@
+<!-- webrtcStreamCard.vue -->
 <template>
   <div class="relative w-full h-full">
     <!-- Pannellum Container (used when pano === 1) -->
@@ -29,9 +30,11 @@ const props = defineProps({
   onTrack: Function,
   pano: { type: Number, default: 0 },
   hotspots: { type: Array, default: [] },
+  initrotate: { type: Boolean, default: false },
+  capture: { type: Boolean, default: false },
 })
 
-const emit = defineEmits(['success', 'hotspotclicked'])
+const emit = defineEmits(['success', 'hotspotclicked', 'autorotatehotspotfinished', 'capture'])
 
 const status = ref('Initializing...')
 const videoRef = ref(null)
@@ -241,6 +244,9 @@ const initializePannellum = () => {
 
     // console.log('Pannellum initialized successfully.')
     status.value = 'Streaming 360' // Update status
+    if (props.initrotate) {
+      autoRotateCheckPoint()
+    }
   } catch (error) {
     // console.error('Error initializing Pannellum:', error)
     status.value = `Error: ${error.message}`
@@ -373,10 +379,66 @@ watch(
     }
   },
 )
+
+watch(() => props.capture, (newVal)=>{
+  if (newVal && pannellumViewer) {
+    const frame = pannellumViewer.getRenderer().render(pannellumViewer.getPitch()/180*Math.PI,pannellumViewer.getYaw()/180*Math.PI,pannellumViewer.getHfov()/180*Math.PI,{'returnImage':true})
+    console.log('frame length:',frame.length)
+    emit('capture',frame)
+  }
+  // props.capture=false
+})
+
+watch(() => props.initrotate, (newValue) => {
+  if (newValue && pannellumViewer) {
+    autoRotateCheckPoint();
+  }
+})
+
 const toggleAutoRotate = () => {
   if (pannellumViewer) {
     const pitch = pannellumViewer.getPitch()
     pannellumViewer.startAutoRotate(-3, pitch) // Set auto-rotation speed
+  }
+}
+
+const autoRotateCheckPoint = async () => {
+  // Ensure the viewer exists and rotation is requested before starting.
+  if (!pannellumViewer || !props.initrotate) {
+    return;
+  }
+
+  console.log('Starting auto-rotate sequence...');
+
+  const pitch = -20;
+  const hfov = 130;
+  const timeout = 1; // 1 second delay between movements
+
+  // Helper function for a single step in the sequence
+  const lookAndDelay = async (yaw) => {
+    // CRITICAL: Check if rotation is still enabled before proceeding
+    if (!props.initrotate) {
+      throw new Error('Rotation sequence cancelled.');
+    }
+    pannellumViewer.lookAt(pitch, yaw, hfov);
+    // Wait for the specified duration
+    await new Promise(resolve => setTimeout(resolve, timeout * 1000));
+  };
+
+  try {
+    // Execute the sequence of movements
+    await lookAndDelay(0);
+    await lookAndDelay(90);
+    await lookAndDelay(180);
+    await lookAndDelay(-90);
+
+    // If the sequence completes without being cancelled, emit the finished event.
+    if (props.initrotate) {
+      console.log('Auto-rotate sequence finished')
+      emit('autorotatehotspotfinished', true)
+    }
+  } catch (error) {
+    console.log(error.message)
   }
 }
 
